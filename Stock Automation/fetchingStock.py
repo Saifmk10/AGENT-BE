@@ -1,7 +1,7 @@
 import requests
 import time , csv
 
-url = "https://the-chat-app-api-git-main-saifmks-projects.vercel.app/api/searchedapi.py?symbol=REDINGTON"
+url = "https://the-chat-app-api-git-main-saifmks-projects.vercel.app/api/searchedapi.py?symbol=YESBANK"
 
 try : 
     while url :
@@ -16,7 +16,7 @@ try :
         price = float(data["stockPrice"])
         name = data["stockName"]
 
-        with open("input.csv" , "a" , newline="") as f:
+        with open("/app/input.csv" , "a" , newline="") as f:
             writer = csv.writer(f)
             writer.writerow([currentTime , name ,price])
         
