@@ -19,7 +19,7 @@ try :
 
         # /app/input.csv ---> use this when running the code on the local docker also keeo cahanging the path
         # ./input.csv  ---> using this in the azure vm change if any error comes
-        with open("./input.csv" , "a" , newline="") as f:
+        with open("/data/input.csv" , "a" , newline="") as f:
             writer = csv.writer(f)
             writer.writerow([currentTime , name ,price])
         
