@@ -1,6 +1,6 @@
 import pandas as pd
 
-data = pd.read_csv("input.csv")
+data = pd.read_csv("input.csv" ,  on_bad_lines="skip")
 
 print("STOCK PRICE FILTERED :")
 
@@ -15,7 +15,12 @@ def cleaningData ():
 
 
     # conveting the string data into a time stamp
-    data["EXTRACTED_TIME"] = pd.to_datetime(data["EXTRACTED_TIME"])
+    data["EXTRACTED_TIME"] = data["EXTRACTED_TIME"] = pd.to_datetime(
+    data["EXTRACTED_TIME"],
+    format="mixed",
+    dayfirst=True,
+    errors="coerce"
+)
 
 
     # the data gets filtered according to that particular date
@@ -26,9 +31,9 @@ def cleaningData ():
 
 
     # here as of now we have 3 segments of the data collected in 1 min which needs to be organized , in realworld we wont need
-    filterDataByMin = (data.set_index("EXTRACTED_TIME").groupby("STOCK_NAME").resample("1min")["EXTRACTED_PRICE"].mean().reset_index())
-    print(filterDataByMin.info())
-    filterDataByMin.to_csv("input.csv" , index=False)
+    # filterDataByMin = (data.set_index("EXTRACTED_TIME").groupby("STOCK_NAME").resample("1min")["EXTRACTED_PRICE"].mean().reset_index())
+    # print(filterDataByMin.info())
+    filteredDataByDate.to_csv("./final.csv" , index=False)
 
 
 cleaningData ()
