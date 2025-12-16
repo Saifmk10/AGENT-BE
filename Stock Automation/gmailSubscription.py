@@ -1,35 +1,22 @@
 import yagmail
+import collectedDataAnalysis
 
 yag = yagmail.SMTP('saifmohasaif216@gmail.com' , 'lefw fwqi eqnp lvvb') 
 
-content = [
-    "this is a testing mail thay has been sent from the python script ... :)"
-]
+content  = collectedDataAnalysis.analysisPandas("./YESBANK.csv")
 
 gmails = [
-    'saifmkpvt@gmail.com' , 
-    # 'saniyan400@gmail.com'
+    'saifmkpvt@gmail.com' ,
+    'mohdshyni@gmail.com' 
 ]
 password = 'lefw fwqi eqnp lvvb'
+subject = "Daily stock price analysis summary"
 
-yag.send( gmails , 'sending a test mail' , content)
- 
-
-# this class is using the yagmail lib to get the mail send to the users
-class gmailSubscription : 
-    def __init__(self ,password ,  sender , reciever , content , subject):
-
-        
-        try : 
-            yag = yagmail.SMTP(sender , password) 
-            yag.send(reciever , subject , content)
-            print(f"MAIL SENT TO {reciever}")
-        except Exception as error : 
-            print(f"ERROR IN AUTHENTICATION : {error}")
-        
+try : 
+    yag.send( gmails , subject , content)
+    print(f"MAIL SENT TO {gmails}")
+except Exception as error : 
+    print(f"ERROR IN AUTHENTICATION : {error}")
 
 
-
-
-        
-# execution = gmailSubscription(password , "saifmohasaif216@gmail.com" , gmails , content , "testing mail from class" )
+# this is currently a test code not stuctured properly so needs to be updated with addition of functions
