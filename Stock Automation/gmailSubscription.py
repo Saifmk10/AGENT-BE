@@ -3,11 +3,11 @@ import collectedDataAnalysis
 
 yag = yagmail.SMTP('saifmohasaif216@gmail.com' , 'lefw fwqi eqnp lvvb') 
 
-content  = collectedDataAnalysis.analysisPandas("./YESBANK.csv")
+content  = collectedDataAnalysis.analysisPandas("/data/YESBANK.csv")
 
 gmails = [
     'saifmkpvt@gmail.com' ,
-    'mohdshyni@gmail.com' 
+    # 'mohdshyni@gmail.com' 
 ]
 password = 'lefw fwqi eqnp lvvb'
 subject = "Daily stock price analysis summary"
