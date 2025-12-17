@@ -8,4 +8,7 @@ RUN pip install -r requirements.txt
 
 COPY . . 
 
-CMD ["python", "-u", "fetchingStock.py"]
+ENV PYTHONUNBUFFERED=1
+
+ENTRYPOINT ["python"]
+CMD ["gmailSubscription.py"]
