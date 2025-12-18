@@ -1,0 +1,84 @@
+
+                <html>
+                  <body style="
+                    font-family: Arial, Helvetica, sans-serif;
+                    font-size: 14px;
+                    color: #1a1a1a;
+                    line-height: 1.5;
+                  ">
+
+                    <p>Dear User,</p>
+
+                    <p>
+                      Please find below the daily stock price analysis summary based on available intraday market data.
+                    </p>
+
+                    <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 5px 0;">
+
+                    <h3 style="margin-bottom: 6px;">Data Summary</h3>
+                    <p style="margin-top: 0;">
+                      A total of <b>655</b> price observations were analyzed during the trading session.
+                    </p>
+
+                    <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 5px 0;">
+
+                    <h3 style="margin-bottom: 6px;">Central Tendency</h3>
+                    <p style="margin: 4px 0;">
+                      Mean Price: <b>₹21.48</b><br>
+                      Median Price: <b>₹21.48</b>
+                    </p>
+                    <p style="margin-top: 6px;">
+                      Prices remained tightly clustered around the median, indicating limited dispersion.
+                    </p>
+
+                    <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 5px 0;">
+
+                    <h3 style="margin-bottom: 6px;">Price Distribution</h3>
+                    <p style="margin: 4px 0;">
+                      Minimum: <b>₹21.41</b><br>
+                      Maximum: <b>₹21.59</b><br>
+                      Interquartile Range (25%–75%): <b>₹21.47 – ₹21.49</b>
+                    </p>
+                    <p style="margin-top: 6px;">
+                      The majority of trades occurred within a narrow price band, reflecting strong price consolidation.
+                    </p>
+
+                    <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 5px 0;">
+
+                    <h3 style="margin-bottom: 6px;">Volatility</h3>
+                    <p style="margin: 4px 0;">
+                      Standard Deviation: <b>₹0.033</b><br>
+                      Intraday Range: <b>₹0.18</b><br>
+                      Percentage Movement: <b>0.83%</b>
+                    </p>
+                    <p style="margin-top: 5px;">
+                      Overall volatility remained low throughout the session.
+                    </p>
+
+                    <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 5px 0;">
+
+                    <h3 style="margin-bottom: 6px;">Market Interpretation</h3>
+                    <p style="margin-top: 0;">
+                      The stock exhibited range-bound behavior with no meaningful directional trend.
+                      Price action remained stable, indicating limited intraday momentum.
+                    </p>
+
+                    <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 5px 0;">
+
+                    <p style="font-size: 12px; color: #666;">
+                      <i>
+                        Disclaimer: This report is automatically generated for informational purposes only.
+                        While reasonable care has been taken to ensure accuracy, it should not be relied upon
+                        as the sole basis for investment decisions. Please refer to the official stock exchange
+                        or company website for authoritative and up-to-date information.
+                      </i>
+                    </p>
+
+                    <p style="margin-top: 10px;">
+                      Regards,<br>
+                      <b>Automated Market Analysis System</b>
+                    </p>
+
+                  </body>
+                </html>
+            

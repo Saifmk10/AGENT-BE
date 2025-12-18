@@ -1,0 +1,13 @@
+ok so there have been some issues with the cron which has been fixed now 
+
+use the same command used in the cron as of now that is : 
+
+45 5 * * * /bin/bash -c 'echo "CRON TRIGGER $(date -u)" >> /home/saifmk10/cron.log && /usr/bin/timeout 10m /usr/bin/docker run --rm -v /home/saifmk10/test/AGENT-BE/Stock_Automation/Analysed_Files_data:/data test-image-2 fetchingStock.py >> /home/saifmk10/cron.log 2>&1 && echo "CRON EXIT $(date -u)" >> /home/saifmk10/cron.log'
+
+so in this line when the container has been rebuild or any changes in the path use the same command as this one is working smoothly
+
+FOR gmail subscription 
+
+the bellow command works just fine same as before any changes in the container make the changes inthe same command
+
+01 10 * * 1-5 /usr/bin/docker run --rm  -v "/home/saifmk10/test/AGENT-BE/Stock Automation/Analysed_Files_data:/data" test-image-2 >> /home/saifmk10/cron.log 2>&1
