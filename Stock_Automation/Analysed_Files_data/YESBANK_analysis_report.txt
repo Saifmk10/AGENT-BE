@@ -17,15 +17,15 @@
 
                     <h3 style="margin-bottom: 6px;">Data Summary</h3>
                     <p style="margin-top: 0;">
-                      A total of <b>655</b> price observations were analyzed during the trading session.
+                      A total of <b>1310</b> price observations were analyzed during the trading session.
                     </p>
 
                     <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 5px 0;">
 
                     <h3 style="margin-bottom: 6px;">Central Tendency</h3>
                     <p style="margin: 4px 0;">
-                      Mean Price: <b>₹21.48</b><br>
-                      Median Price: <b>₹21.48</b>
+                      Mean Price: <b>₹21.46</b><br>
+                      Median Price: <b>₹21.47</b>
                     </p>
                     <p style="margin-top: 6px;">
                       Prices remained tightly clustered around the median, indicating limited dispersion.
@@ -35,9 +35,9 @@
 
                     <h3 style="margin-bottom: 6px;">Price Distribution</h3>
                     <p style="margin: 4px 0;">
-                      Minimum: <b>₹21.41</b><br>
+                      Minimum: <b>₹21.38</b><br>
                       Maximum: <b>₹21.59</b><br>
-                      Interquartile Range (25%–75%): <b>₹21.47 – ₹21.49</b>
+                      Interquartile Range (25%–75%): <b>₹21.43 – ₹21.48</b>
                     </p>
                     <p style="margin-top: 6px;">
                       The majority of trades occurred within a narrow price band, reflecting strong price consolidation.
@@ -47,9 +47,9 @@
 
                     <h3 style="margin-bottom: 6px;">Volatility</h3>
                     <p style="margin: 4px 0;">
-                      Standard Deviation: <b>₹0.033</b><br>
-                      Intraday Range: <b>₹0.18</b><br>
-                      Percentage Movement: <b>0.83%</b>
+                      Standard Deviation: <b>₹0.039</b><br>
+                      Intraday Range: <b>₹0.21</b><br>
+                      Percentage Movement: <b>0.97%</b>
                     </p>
                     <p style="margin-top: 5px;">
                       Overall volatility remained low throughout the session.
