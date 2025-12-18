@@ -44,7 +44,7 @@ try :
                 writer.writerow(HEADER) # adding the header if the file doesnt exist
 
             writer.writerow([date,currentTime,name,price]) #if file already exist this will start writing the row , will also come bellow the header
-        time.sleep(10)  #10 here bcs crons runs only every 5 mins
+        time.sleep(300) 
 
 
 except requests.exceptions.RequestException as e:
