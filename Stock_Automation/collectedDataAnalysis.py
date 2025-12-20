@@ -1,3 +1,9 @@
+# this file plays the main role for the analysis where the data that is saved in the csv by the data fetching code is analysed
+# once this data has been analysed the data is then added into the html format for the mail automation
+# the mail automation does not happen from this file and happens in the gmailSubscription.py
+# [NOTE] the data collected needs to be analysed again and then segeregated with the help of test conditions 
+
+
 import csv
 import pandas as pd
 from pathlib import Path
