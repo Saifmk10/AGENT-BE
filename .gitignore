@@ -4,3 +4,6 @@ environment
 
 #login key for firebase 
 the-chat-44e8e-firebase-adminsdk-fbsvc-7f501ef3f6.json
+
+# byte codes 
+__pycache__
