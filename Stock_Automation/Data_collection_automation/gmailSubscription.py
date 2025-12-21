@@ -3,7 +3,7 @@ import collectedDataAnalysis
 
 yag = yagmail.SMTP('saifmohasaif216@gmail.com' , 'lefw fwqi eqnp lvvb') 
 
-content  = collectedDataAnalysis.analysisPandas("/data/YESBANK.csv")
+content  = collectedDataAnalysis.analysisPandas("./Analysed_Files_data/csvFiles/YESBANK.csv")
 
 gmails = [
     'saifmkpvt@gmail.com' ,
