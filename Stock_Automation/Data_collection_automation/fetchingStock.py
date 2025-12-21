@@ -27,24 +27,24 @@ try :
         # these collect the exact data that has been generated from the json repsonse and then added into the csv
         price = float(data["stockPrice"])
         name = data["stockName"]
-
+        
 
         # checking if the file exist in the location , if it exist then the header wont be added and only data will be added
         # if file is not present the csv will be created and the header will also be added
-        file_exists = os.path.isfile(f"/data/{stockName}.csv")
+        file_exists = os.path.isfile(f"./Analysed_Files_data/csvFiles/{stockName}.csv")
 
 
         # /app/input.csv ---> use this when running the code on the local docker also keeo cahanging the path
         # ./input.csv  ---> using this in the azure vm change if any error comes
-        # /data/input.csv --. this has been used for the vm where we run the docker with this command [docker run -d   -v ~/stock-data:/data   testing]
-        with open(f"/data/{stockName}.csv" , "a" , newline="") as f:
+        # f"/data/{stockName}.csv --> this has been used for the vm where we run the docker with this command [docker run -d   -v ~/stock-data:/data   testing]
+        with open(f"./Analysed_Files_data/csvFiles/{stockName}.csv" , "a" , newline="") as f:
             writer = csv.writer(f)
 
             if not file_exists : 
                 writer.writerow(HEADER) # adding the header if the file doesnt exist
 
             writer.writerow([date,currentTime,name,price]) #if file already exist this will start writing the row , will also come bellow the header
-        time.sleep(300) 
+        time.sleep(30) 
 
 
 except requests.exceptions.RequestException as e:
