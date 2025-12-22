@@ -3,7 +3,7 @@
 #once the data has been fetched the data will be then send to the logics reponsible for fetching the stock name and all the analysis
 #once the stock has been fetched it is then added into the fuzzy logic where the stock name is matched with the token that the api can understand
 
-from connection import db       #a file thay contains all the code for the connection to the db
+from Data_fetching_from_db.connection import db       #a file thay contains all the code for the connection to the db
 import os , csv
 from rapidfuzz import process, fuzz
 
@@ -129,11 +129,14 @@ def fetchingUserAddedStock():
         for individualStocks in stocks["stocks"]:
             # print(individualStocks)
             userAdded = individualStocks
-            symbol.append( fuzzyLogic(userAdded, stockDict)) #symbol of the stock is appended from here
+            value = fuzzyLogic(userAdded, stockDict)
+            if value is not None:
+                symbol.append(value) #symbol of the stock is appended from here
             # print(symbol)
+
 
     return symbol
     
 
 # debug only
-# print(fetchingUserAddedStock())
+print(fetchingUserAddedStock())
