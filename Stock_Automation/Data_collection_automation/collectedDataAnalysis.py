@@ -7,6 +7,8 @@
 import csv
 import pandas as pd
 from pathlib import Path
+from google import genai
+from api_key import key
 
 # bellow code is only for the purpose of testing and not for preoduction
 
@@ -49,8 +51,92 @@ def analysisPandas (path):
     # print(snapshot["percentage"])
 
 
+
   # the report is parsed based on the information that has been collected and analyzed by the pandas
-    report = f"""
+  
+
+    # output_file = Path("./Analysed_Files_data/reports") / f"{stockName}_analysis_report.txt"
+
+    # with open(output_file, "w" , encoding="utf-8") as file:
+    #     file.write(report)
+
+    return snapshot
+# use the function call bellow only for the purpose of testing 
+# print(analysisPandas("./Analysed_Files_data/csvFiles/RELIANCE.csv"))
+
+
+
+# ======> add new features into this once this starts working [MAINLY THE VISUALIZATION] <========
+
+
+
+
+
+
+def geminiResponse (analysis):
+    API_KEY = key
+    client = genai.Client(api_key=API_KEY)
+
+
+    try :   
+      report = analysis
+      response = client.models.generate_content(
+      model="gemini-3-flash-preview",
+      # contents=report + "You are given dict content related to a stock. Task: Convert this into useful insights a user can use to decide about the stock.Rules:- Limit the response to 200 words- Output only plain text- Do not use any symbols except the rupee symbol ₹- Start with one short hero paragraph- After that, write multiple short points, each on a new line- Do not use bullet symbols like -, *, or •"
+
+      contents = f"""
+                      {report}
+
+                      You are given analyzed stock data.
+
+                      Task:
+                      Generate useful insights that help a user decide about the stock.
+
+                      Strict output rules:
+                      - Output ONLY valid HTML markup
+                      - DO NOT include <html>, <head>, <body>, or <!DOCTYPE>
+                      - The output must be suitable to paste directly inside an existing <div>
+                      - Use only basic HTML tags such as <p>, <div>, <br>, <strong>, <span>
+                      - Do NOT include markdown or explanations
+                      - Do NOT include bullet symbols like -, *, or •
+                      - Do NOT include any symbols except the rupee symbol ₹
+                      - Limit the content to 200 words
+
+                      Structure:
+                      - Start with one short hero paragraph wrapped in a <p> tag
+                      - Follow with multiple short insight paragraphs separated using <br /><br />
+
+                      Generate only the HTML fragment now.
+                  """
+
+
+
+      )
+
+      # print(response.text)
+      return response.text
+    except Exception as error : 
+       print(error + "error in collectedDataAnalysis")
+
+# geminiResponse()
+
+
+
+
+
+
+
+
+# this is the main function where all the analysis and the ai parsing will come together and then will be put together into the html format that will be send via mail
+# the path for the analysisPanda function is being added within this function
+# [NOTE] : need to add the iteration where all the stocks csv will be added analyzed one after the other
+def mailParser():
+  snapshot = analysisPandas("./Analysed_Files_data/csvFiles/RELIANCE.csv")
+  aiResponse = geminiResponse(snapshot)
+
+
+  # the report is parsed based on the information that has been collected and analyzed by the pandas
+  report = f"""
                 <!DOCTYPE html>
                   <html lang="en">
                   <head>
@@ -124,8 +210,7 @@ def analysisPandas (path):
                       <!-- Interpretation -->
                       <div style="padding:20px;font-size:16px;line-height:1.4;text-align:center;">
                         <h3 style="margin-top:0;text-decoration:underline;">Market Interpretation</h3>
-                        The stock exhibited range-bound behavior with no meaningful trend.<br /><br />
-                        Price action remained stable with limited momentum.
+                        {aiResponse}
                       </div>
 
                       <!-- Footer -->
@@ -149,19 +234,7 @@ def analysisPandas (path):
                   </body>
                   </html>
             """
-
-
-
-
-    # output_file = Path("./Analysed_Files_data/reports") / f"{stockName}_analysis_report.txt"
-
-    # with open(output_file, "w" , encoding="utf-8") as file:
-    #     file.write(report)
-
-    return report
-
-
-
-
-# use the function call bellow only for the purpose of testing 
-# print(analysisPandas("./YESBANK.csv"))
+  print(report)
+  # print(aiResponse)
+  return report
+# mailParser()
