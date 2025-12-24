@@ -13,20 +13,27 @@ from Data_fetching_from_db.fetching_tokenization import fetchingUserAddedStock
 
 HEADER = ["EXTRACTED_DATE","EXTRACTED_TIME","STOCK_NAME","EXTRACTED_PRICE"]
 
+
+# this function plays the main role where the data (stock price) is collected on a loop and saved in a csv file for the other modules to analyze later
 def priceFetcher(stockName):
 
     url = f"https://the-chat-app-api-git-main-saifmks-projects.vercel.app/api/searchedapi.py?symbol={stockName}"
-    BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    
+    
+    # setting the path for adding the csv into (remains the same for the vm)
+    # for each user a new folder will be created in his/her email id so segregation is simple and can avoid any kind of mix ups while sending the mail
+    fetchingEmail = fetchingUserAddedStock()
+    emailDir = fetchingEmail['email'][0]
 
+    BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     CSV_DIR = os.path.join(
         BASE_DIR,
         "Data_collection_automation",
         "Analysed_Files_data",
-        "csvFiles"
+        "csvFiles",
+        emailDir
     )
-
     os.makedirs(CSV_DIR ,exist_ok=True)
-
     file_path = os.path.join(CSV_DIR , f"{stockName}.csv")
     
 
@@ -78,7 +85,11 @@ def priceFetcher(stockName):
 
 def main () :
 
-    stocks = fetchingUserAddedStock()
+    fetchedData = fetchingUserAddedStock()
+    # print(fetchedData)
+
+    stocks = fetchedData["symbol"]
+    # print(stocks)
 
     if not stocks: 
         print("No stock was extracted from db : FROM fetchingStocks.py")

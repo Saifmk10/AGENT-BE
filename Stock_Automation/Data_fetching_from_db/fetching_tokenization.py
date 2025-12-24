@@ -81,7 +81,7 @@ def fetchingUserAddedStock():
         userId = data["UserId"]
         userEmail = data["Email"]
 
-        # this is the var which is responsible forfeching if the user has a subscribed to use the stock agent , if they have subscribed then the data will the collected
+        # this is the var which is responsible for fetching if the user has a subscribed to use the stock agent , if they have subscribed then the data will the collected
         CheckAvailabilityPath = (
             db.collection("Users").document(userId).collection("Agents").document("Finance").get()
         )
@@ -135,7 +135,7 @@ def fetchingUserAddedStock():
             # print(symbol)
 
 
-    return symbol
+    return {"symbol" : symbol , "email":[result[0]["useremail"]]}
     
 
 # debug only
