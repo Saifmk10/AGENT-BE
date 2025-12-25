@@ -2,7 +2,7 @@
 #it checks all the users and finds the users who have subscribed to the agent then only then fetch the data from the db
 #once the data has been fetched the data will be then send to the logics reponsible for fetching the stock name and all the analysis
 #once the stock has been fetched it is then added into the fuzzy logic where the stock name is matched with the token that the api can understand
-
+# Data_fetching_from_db.
 from Data_fetching_from_db.connection import db       #a file thay contains all the code for the connection to the db
 import os , csv
 from rapidfuzz import process, fuzz
@@ -89,6 +89,7 @@ def fetchingUserAddedStock():
         # If the user has subscribed then the next steps happens to fetch all the names of the stock ONLY
         if CheckAvailabilityPath.exists : 
             # print("data will be collected")
+            
             fetchingStockNames = (
                 db.collection("Users").document(userId).collection("Agents").document("Finance").collection("Stock_Added").stream()
             )
@@ -98,6 +99,7 @@ def fetchingUserAddedStock():
             # once the user is cinfirned to have a stock_added in the db then the stock will be fetched
             for stocks in fetchingStockNames:
                 data = stocks.to_dict()
+                # print(userEmail)
                 # print(data["stockName"])
                 addedStock.append(data["stockName"])
 
@@ -121,22 +123,32 @@ def fetchingUserAddedStock():
     tickerList, stockDict = loadTickerList()
     
     result = userAddedStocks
-    symbol = []
+    finalResult = []
     
     # loops helping to read through the tuple and the list
-    for stocks in result : 
-        # print(stocks["stocks"])
-        for individualStocks in stocks["stocks"]:
-            # print(individualStocks)
-            userAdded = individualStocks
-            value = fuzzyLogic(userAdded, stockDict)
-            if value is not None:
-                symbol.append(value) #symbol of the stock is appended from here
-            # print(symbol)
+    for userStock in result: 
+        email = userStock["useremail"]
+        stock = userStock["stocks"]
+
+        symbol = [] #holds all the conversted stock names into symbols
+
+        for stockName in stock:
+            value = fuzzyLogic(stockName , stockDict)
+            if value : 
+                symbol.append(value)
+
+        # parsing the final data into a dict format
+        if symbol:
+            finalResult.append({
+                "email" : email,
+                "stocks" : symbol
+            })
 
 
-    return {"symbol" : symbol , "email":[result[0]["useremail"]]}
+
+
+    return finalResult
     
 
 # debug only
-print(fetchingUserAddedStock())
+# print(fetchingUserAddedStock())
