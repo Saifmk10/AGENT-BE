@@ -10,8 +10,17 @@ from Data_fetching_from_db.fetching_tokenization import fetchingUserAddedStock
 
 
 
-
 HEADER = ["EXTRACTED_DATE","EXTRACTED_TIME","STOCK_NAME","EXTRACTED_PRICE"]
+fetchingDBData = fetchingUserAddedStock() # using the data that was fetched form the db
+stock_to_emails = {}
+print("Stocks added and users list" , fetchingDBData)
+
+# the data that was fetched is not converted into a key value pair so only the user subscribed stocks will be added to his repo
+for user in fetchingDBData:
+    email = user["email"]
+    for stock in user["stocks"]:
+        stock_to_emails.setdefault(stock, []).append(email)
+
 
 
 # this function plays the main role where the data (stock price) is collected on a loop and saved in a csv file for the other modules to analyze later
@@ -22,21 +31,11 @@ def priceFetcher(stockName):
     
     # setting the path for adding the csv into (remains the same for the vm)
     # for each user a new folder will be created in his/her email id so segregation is simple and can avoid any kind of mix ups while sending the mail
-    fetchingEmail = fetchingUserAddedStock()
-    emailDir = fetchingEmail['email'][0]
+    
+    # emailDir = fetchingEmail['email']
+    # print(emailDir)
 
     BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    CSV_DIR = os.path.join(
-        BASE_DIR,
-        "Data_collection_automation",
-        "Analysed_Files_data",
-        "csvFiles",
-        emailDir
-    )
-    os.makedirs(CSV_DIR ,exist_ok=True)
-    file_path = os.path.join(CSV_DIR , f"{stockName}.csv")
-    
-
 
     while True :
         try :
@@ -57,45 +56,61 @@ def priceFetcher(stockName):
             name = data["stockName"]
 
 
-            # checking if the file exist in the location , if it exist then the header wont be added and only data will be added
-            # if file is not present the csv will be created and the header will also be added
-            # file_exists = os.path.isfile(f"./Analysed_Files_data/csvFiles/{stockName}.csv")
-            file_exists = os.path.isfile(file_path)
+            # using the key value pair mentioned above to add the data into the respective path
+            for email in stock_to_emails.get(stockName, []):
+                print(email)
+                CSV_DIR = os.path.join(
+                    BASE_DIR,
+                    "Data_collection_automation",
+                    "Analysed_Files_data",
+                    "csvFiles",
+                    email
+                )
+                os.makedirs(CSV_DIR ,exist_ok=True)
+                file_path = os.path.join(CSV_DIR , f"{stockName}.csv")
 
 
-            # /app/input.csv ---> use this when running the code on the local docker also keeo cahanging the path
-            # ./input.csv  ---> using this in the azure vm change if any error comes
-            # f"/data/{stockName}.csv --> this has been used for the vm where we run the docker with this command [docker run -d   -v ~/stock-data:/data   testing]
-            with open(file_path , "a" , newline="") as f:
-                writer = csv.writer(f)
-                if not file_exists : 
-                    writer.writerow(HEADER) # adding the header if the file doesnt exist
-                writer.writerow([date,currentTime,name,price]) #if file already exist this will start writing the row , will also come bellow the header
-            time.sleep(30) 
 
+                # checking if the file exist in the location , if it exist then the header wont be added and only data will be added
+                # if file is not present the csv will be created and the header will also be added
+                # file_exists = os.path.isfile(f"./Analysed_Files_data/csvFiles/{stockName}.csv")
+                file_exists = os.path.isfile(file_path)
+
+
+                # /app/input.csv ---> use this when running the code on the local docker also keeo cahanging the path
+                # ./input.csv  ---> using this in the azure vm change if any error comes
+                # f"/data/{stockName}.csv --> this has been used for the vm where we run the docker with this command [docker run -d   -v ~/stock-data:/data   testing]
+                with open(file_path , "a" , newline="") as f:
+                    writer = csv.writer(f)
+                    if not file_exists : 
+                        writer.writerow(HEADER) # adding the header if the file doesnt exist
+                    writer.writerow([date,currentTime,name,price]) #if file already exist this will start writing the row , will also come bellow the header
+
+            time.sleep(30)  #[NOTE]change to 300 in prod =================<>=======================
 
         except KeyboardInterrupt:
             raise
         except Exception as e:
-            print("THREAD CRASHED WITH:", repr(e))
+            print("THREAD CRASHED WITH [ln 90]:", repr(e))
             raise
 
 
-
-
+# main function is the runnnig function this is executed with the help of the run.py function, done to prevent the modules and folder conflicts
 def main () :
 
-    fetchedData = fetchingUserAddedStock()
-    # print(fetchedData)
+    jobs = set()
 
-    stocks = fetchedData["symbol"]
-    # print(stocks)
+    for user in fetchingDBData:
+        stockNames = user["stocks"]
 
-    if not stocks: 
-        print("No stock was extracted from db : FROM fetchingStocks.py")
+        if not stockNames:
+            continue
 
-    try : 
-        with ThreadPoolExecutor(max_workers=len(stocks)) as executor:
-            executor.map(priceFetcher, stocks)
-    except KeyboardInterrupt : 
+        for stock in stockNames:
+            jobs.add(stock)
+
+    try:
+        with ThreadPoolExecutor(max_workers=min(5, len(jobs))) as executor:
+            executor.map(priceFetcher, jobs)
+    except KeyboardInterrupt:
         print("FETCHING STOCK STOPPED BY KEYBOARD..")
