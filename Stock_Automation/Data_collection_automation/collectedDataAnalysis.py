@@ -9,6 +9,21 @@ import pandas as pd
 from pathlib import Path
 from google import genai
 from api_key import key
+import os , time
+
+
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) # fetching the root path
+  # print(BASE_DIR)
+
+DATA_DIR = os.path.join(
+     BASE_DIR,
+     "Data_collection_automation",
+     "Analysed_files_data",
+     "csvFiles", 
+  )
+
+stockUsers = os.listdir(DATA_DIR)
 
 # bellow code is only for the purpose of testing and not for preoduction
 
@@ -61,18 +76,14 @@ def analysisPandas (path):
     #     file.write(report)
 
     return snapshot
-# use the function call bellow only for the purpose of testing 
-# print(analysisPandas("./Analysed_Files_data/csvFiles/RELIANCE.csv"))
 
 
-
+ 
 # ======> add new features into this once this starts working [MAINLY THE VISUALIZATION] <========
 
 
 
-
-
-
+# this function takes in the output from the analysispanda and then adds a summary that the users can understand easily
 def geminiResponse (analysis):
     API_KEY = key
     client = genai.Client(api_key=API_KEY)
@@ -116,12 +127,31 @@ def geminiResponse (analysis):
       # print(response.text)
       return response.text
     except Exception as error : 
-       print(error + "error in collectedDataAnalysis")
-
-# geminiResponse()
+       print(error , "error in collectedDataAnalysis")
 
 
 
+# function plays a role of validation and authentication , where a map and key is created for each user and the stock that the user has added , this map and key can be used for the stocks authentication
+def usersAndStocksMap():
+  usersAndStocks = {}
+
+  # loop that loops through all the users who has added stock and the data has been colected already , the data is then accessed throught this loop for analysis
+  for users in stockUsers:
+    try:
+      filesAdded = os.path.join(BASE_DIR,"Data_collection_automation","Analysed_files_data","csvFiles", users)
+
+      fileContent = os.listdir(filesAdded)     
+
+      if users not in usersAndStocks:
+        usersAndStocks[users] = []
+
+      # content = {users : fileContent}
+      usersAndStocks[users].append(fileContent) # this is the key added to the map here
+
+    except Exception as error : 
+       print("error in collectedDataAnalysis.py : " , error)
+
+  return usersAndStocks
 
 
 
@@ -131,12 +161,27 @@ def geminiResponse (analysis):
 # the path for the analysisPanda function is being added within this function
 # [NOTE] : need to add the iteration where all the stocks csv will be added analyzed one after the other
 def mailParser():
-  snapshot = analysisPandas("./Analysed_Files_data/csvFiles/RELIANCE.csv")
-  aiResponse = geminiResponse(snapshot)
+
+  start = time.perf_counter()
+
+  for singleUser in stockUsers:
+    try :
+      path =  os.path.join(BASE_DIR,"Data_collection_automation","Analysed_files_data","csvFiles", singleUser)
+      stocksAdded = os.listdir(path)
+      print(stocksAdded)
+      
+      for stocks in stocksAdded:
+        collectedPath =  os.path.join(BASE_DIR,"Data_collection_automation","Analysed_files_data","csvFiles", singleUser , stocks)
+        print(stocks , " PATH : " , collectedPath)
+
+        snapshot = analysisPandas(collectedPath)
+        aiResponse = geminiResponse(snapshot)
+
+        # print(stocks , " ANALYSED DATA :", snapshot)
+        # print(stocks , " AI RESPONSE :", aiResponse)
 
 
-  # the report is parsed based on the information that has been collected and analyzed by the pandas
-  report = f"""
+        report = f"""
                 <!DOCTYPE html>
                   <html lang="en">
                   <head>
@@ -234,7 +279,20 @@ def mailParser():
                   </body>
                   </html>
             """
-  print(report)
-  # print(aiResponse)
-  return report
-# mailParser()
+
+
+        print("FINAL REPORT : " , report)
+    except Exception as error:
+       print("Error from collectedDataAnalysis.py" , error)
+
+  end = time.perf_counter()
+
+  print("TIME TAKEN --->" , end - start)
+
+
+  # the report is parsed based on the information that has been collected and analyzed by the pandas
+  
+  # print(report)
+  # # print(aiResponse)
+  # return report
+mailParser()
