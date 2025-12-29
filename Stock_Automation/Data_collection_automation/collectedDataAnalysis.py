@@ -23,6 +23,13 @@ DATA_DIR = os.path.join(
      "csvFiles", 
   )
 
+REPORT_DIR = os.path.join(
+    BASE_DIR,
+     "Data_collection_automation",
+     "Analysed_files_data",
+     "reports", 
+)
+
 stockUsers = os.listdir(DATA_DIR)
 
 # bellow code is only for the purpose of testing and not for preoduction
@@ -92,7 +99,7 @@ def geminiResponse (analysis):
     try :   
       report = analysis
       response = client.models.generate_content(
-      model="gemini-3-flash-preview",
+      model="gemini-2.0-flash",
       # contents=report + "You are given dict content related to a stock. Task: Convert this into useful insights a user can use to decide about the stock.Rules:- Limit the response to 200 words- Output only plain text- Do not use any symbols except the rupee symbol ₹- Start with one short hero paragraph- After that, write multiple short points, each on a new line- Do not use bullet symbols like -, *, or •"
 
       contents = f"""
@@ -101,9 +108,9 @@ def geminiResponse (analysis):
                       You are given analyzed stock data.
 
                       Task:
-                      Generate useful insights that help a user decide about the stock.
-
-                      Strict output rules:
+                      Generate detailed, decision-oriented insights that help a user understand the current behavior and implications of the stock data.
+                      
+                      STRICT OUTPUT RULES:
                       - Output ONLY valid HTML markup
                       - DO NOT include <html>, <head>, <body>, or <!DOCTYPE>
                       - The output must be suitable to paste directly inside an existing <div>
@@ -111,13 +118,26 @@ def geminiResponse (analysis):
                       - Do NOT include markdown or explanations
                       - Do NOT include bullet symbols like -, *, or •
                       - Do NOT include any symbols except the rupee symbol ₹
-                      - Limit the content to 200 words
+                      - Limit the content to 200 words PER STOCK
+                      
+                      CONTENT REQUIREMENTS (MANDATORY):
+                      For EACH stock, the insights MUST clearly cover:
+                      - What the price behavior indicates (trend or lack of movement)
+                      - What zero or low volatility implies for risk
+                      - Whether the data suggests consolidation, inactivity, or limited trading
+                      - What a cautious user should consider next (timeframe, volume, confirmation)
+                      
+                      HTML STRUCTURE:
+                      - Start with ONE short hero paragraph wrapped in a <p> tag that summarizes the overall situation
+                      - Follow with multiple short insight paragraphs
+                      - Separate insight paragraphs using <br /><br />
+                      - Do NOT repeat the same sentence structure across paragraphs
+                      
+                      IMPORTANT:
+                      - Do NOT merge different stocks into one paragraph
+                      - Clearly separate insights per stock using <strong>StockName</strong> headings
+                      - Generate only the HTML fragment now
 
-                      Structure:
-                      - Start with one short hero paragraph wrapped in a <p> tag
-                      - Follow with multiple short insight paragraphs separated using <br /><br />
-
-                      Generate only the HTML fragment now.
                   """
 
 
@@ -163,25 +183,67 @@ def usersAndStocksMap():
 def mailParser():
 
   start = time.perf_counter()
+  usersAndStocks = {}
+  analyzedData = {}
 
   for singleUser in stockUsers:
+
+    analyzedData.setdefault(singleUser, [])
+
     try :
+      #fetching the path where the data has been stored asper the user , for loop loops through all the email ids present 
       path =  os.path.join(BASE_DIR,"Data_collection_automation","Analysed_files_data","csvFiles", singleUser)
       stocksAdded = os.listdir(path)
-      print(stocksAdded)
+      print("LOOKING AT USER --->" , singleUser)
       
+
+      # this for loop then moves into the user email folder and fetch the path to all the stocks that has been added so it can use the panda function for analysis
       for stocks in stocksAdded:
         collectedPath =  os.path.join(BASE_DIR,"Data_collection_automation","Analysed_files_data","csvFiles", singleUser , stocks)
-        print(stocks , " PATH : " , collectedPath)
+        # print(stocks , " PATH : " , collectedPath)
 
-        snapshot = analysisPandas(collectedPath)
-        aiResponse = geminiResponse(snapshot)
+
+
+
+        #calling the analysis funtions to fetch the data from the analysis 
+        snapshot = analysisPandas(collectedPath) # analyzed data that contains the data that has all mean median etc
+        # aiResponse = geminiResponse(snapshot)
+        aiResponse = "na"
+
 
         # print(stocks , " ANALYSED DATA :", snapshot)
         # print(stocks , " AI RESPONSE :", aiResponse)
 
 
-        report = f"""
+
+        try : 
+          # this is a dict , where all the users email , stocks they added , that stocks analysis is put into one place
+          # this is done so that each user will get 1 api call for all the stocks reducing cost.
+          # adding the snapshot alone into the ai is enought but then ive added the stock name too , just incase
+          analyzedData[singleUser].append({
+             "stocks" : stocks,
+             "analysis" : snapshot, 
+          })
+             
+        except Exception as error:
+           print("error in dict in collectedDataAnalysis.py:" , error)
+
+    except Exception as error:
+       print("Error from collectedDataAnalysis.py" , error)
+
+
+
+  # loops plays an imp role where it makes sure that each users get just 1 api call , all the data has been added into the analyzedData as seen above and this data is used here to get the ai summary
+  # the ai summary is then added into the report [NOTE]: for now 
+  # then the complete report is then saved into a folder called reports from where the mail will be sent
+  # this loop is resent in the outer loop so each user gets only 1 iteration and making sure there is no data disputes happening in between
+  for userEmail , usersData in analyzedData.items():
+    aiResponse = geminiResponse(usersData)
+
+
+    # report is the final template that holds all the html code that will be send to the user as the main report mail
+    #[NOTE] need to make this into a table format as multiple stocks will be involved
+    report = f"""
                 <!DOCTYPE html>
                   <html lang="en">
                   <head>
@@ -278,21 +340,25 @@ def mailParser():
 
                   </body>
                   </html>
-            """
+            """    
+
+    for stockData in usersData:
+      stockName = stockData["stocks"]    
+
+      # optional: remove .csv and make it html
+      file_name = stockName.replace(".csv", ".html")
+
+      user_dir = os.path.join(REPORT_DIR, userEmail)
+      os.makedirs(user_dir, exist_ok=True)
+
+      file_path = os.path.join(user_dir, file_name)
+
+      with open(file_path, "w", encoding="utf-8") as file:
+          file.write(report)
 
 
-        print("FINAL REPORT : " , report)
-    except Exception as error:
-       print("Error from collectedDataAnalysis.py" , error)
 
   end = time.perf_counter()
-
   print("TIME TAKEN --->" , end - start)
 
-
-  # the report is parsed based on the information that has been collected and analyzed by the pandas
-  
-  # print(report)
-  # # print(aiResponse)
-  # return report
 mailParser()

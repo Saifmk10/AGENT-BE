@@ -6,8 +6,7 @@ yag = yagmail.SMTP('saifmohasaif216@gmail.com' , 'lefw fwqi eqnp lvvb')
 content  = collectedDataAnalysis.mailParser()
 
 gmails = [
-    'saifmkpvt@gmail.com' ,
-    # 'mohdshyni@gmail.com' 
+    'saifmkpvt@gmail.com' , 
 ]
 password = 'lefw fwqi eqnp lvvb'
 subject = "Daily stock price analysis summary"
