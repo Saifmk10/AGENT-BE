@@ -12,4 +12,5 @@ __pycache__
 #api key
 api_key.py
 
-cvsFiles/*
+# users data that was analyzed for testing ONLY
+Analysed_Files_data
