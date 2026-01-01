@@ -8,27 +8,33 @@ import csv
 import pandas as pd
 from pathlib import Path
 from google import genai
-from api_key import key
 import os , time
+from datetime import datetime
 
 
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) # fetching the root path
-  # print(BASE_DIR)
+# print(BASE_DIR)
 
 DATA_DIR = os.path.join(
      BASE_DIR,
      "Data_collection_automation",
-     "Analysed_files_data",
+     "Analysed_Files_data",
      "csvFiles", 
   )
 
 REPORT_DIR = os.path.join(
     BASE_DIR,
      "Data_collection_automation",
-     "Analysed_files_data",
+     "Analysed_Files_data",
      "reports", 
 )
+
+# function that makes sure the folders are created , as the folders are ignored my default 
+def init_storage():
+    os.makedirs(DATA_DIR, exist_ok=True)
+    os.makedirs(REPORT_DIR, exist_ok=True)
+
 
 stockUsers = os.listdir(DATA_DIR)
 
@@ -72,22 +78,10 @@ def analysisPandas (path):
     }
     # print(snapshot["percentage"])
 
-
-
-  # the report is parsed based on the information that has been collected and analyzed by the pandas
-  
-
-    # output_file = Path("./Analysed_Files_data/reports") / f"{stockName}_analysis_report.txt"
-
-    # with open(output_file, "w" , encoding="utf-8") as file:
-    #     file.write(report)
-
     return snapshot
 
 
- 
 # ======> add new features into this once this starts working [MAINLY THE VISUALIZATION] <========
-
 
 
 # this function takes in the output from the analysispanda and then adds a summary that the users can understand easily
@@ -95,86 +89,42 @@ def geminiResponse (analysis):
     API_KEY = key
     client = genai.Client(api_key=API_KEY)
 
-
     try :   
-      report = analysis
-      response = client.models.generate_content(
-      model="gemini-2.0-flash",
-      # contents=report + "You are given dict content related to a stock. Task: Convert this into useful insights a user can use to decide about the stock.Rules:- Limit the response to 200 words- Output only plain text- Do not use any symbols except the rupee symbol ₹- Start with one short hero paragraph- After that, write multiple short points, each on a new line- Do not use bullet symbols like -, *, or •"
+        report = analysis
+        response = client.models.generate_content(
+            model="gemini-2.0-flash",
+            contents=f"""
+            {report}
+            """
+        )
 
-      contents = f"""
-                      {report}
-
-                      You are given analyzed stock data.
-
-                      Task:
-                      Generate detailed, decision-oriented insights that help a user understand the current behavior and implications of the stock data.
-                      
-                      STRICT OUTPUT RULES:
-                      - Output ONLY valid HTML markup
-                      - DO NOT include <html>, <head>, <body>, or <!DOCTYPE>
-                      - The output must be suitable to paste directly inside an existing <div>
-                      - Use only basic HTML tags such as <p>, <div>, <br>, <strong>, <span>
-                      - Do NOT include markdown or explanations
-                      - Do NOT include bullet symbols like -, *, or •
-                      - Do NOT include any symbols except the rupee symbol ₹
-                      - Limit the content to 200 words PER STOCK
-                      
-                      CONTENT REQUIREMENTS (MANDATORY):
-                      For EACH stock, the insights MUST clearly cover:
-                      - What the price behavior indicates (trend or lack of movement)
-                      - What zero or low volatility implies for risk
-                      - Whether the data suggests consolidation, inactivity, or limited trading
-                      - What a cautious user should consider next (timeframe, volume, confirmation)
-                      
-                      HTML STRUCTURE:
-                      - Start with ONE short hero paragraph wrapped in a <p> tag that summarizes the overall situation
-                      - Follow with multiple short insight paragraphs
-                      - Separate insight paragraphs using <br /><br />
-                      - Do NOT repeat the same sentence structure across paragraphs
-                      
-                      IMPORTANT:
-                      - Do NOT merge different stocks into one paragraph
-                      - Clearly separate insights per stock using <strong>StockName</strong> headings
-                      - Generate only the HTML fragment now
-
-                  """
-
-
-
-      )
-
-      # print(response.text)
-      return response.text
+        # print(response.text)
+        return response.text
     except Exception as error : 
-       print(error , "error in collectedDataAnalysis")
-
+        print(error , "error in collectedDataAnalysis")
 
 
 # function plays a role of validation and authentication , where a map and key is created for each user and the stock that the user has added , this map and key can be used for the stocks authentication
 def usersAndStocksMap():
-  usersAndStocks = {}
+    usersAndStocks = {}
 
-  # loop that loops through all the users who has added stock and the data has been colected already , the data is then accessed throught this loop for analysis
-  for users in stockUsers:
-    try:
-      filesAdded = os.path.join(BASE_DIR,"Data_collection_automation","Analysed_files_data","csvFiles", users)
+    # loop that loops through all the users who has added stock and the data has been colected already , the data is then accessed throught this loop for analysis
+    for users in stockUsers:
+        try:
+            filesAdded = os.path.join(BASE_DIR,"Data_collection_automation","Analysed_Files_data","csvFiles", users)
 
-      fileContent = os.listdir(filesAdded)     
+            fileContent = os.listdir(filesAdded)     
 
-      if users not in usersAndStocks:
-        usersAndStocks[users] = []
+            if users not in usersAndStocks:
+                usersAndStocks[users] = []
 
-      # content = {users : fileContent}
-      usersAndStocks[users].append(fileContent) # this is the key added to the map here
+            # content = {users : fileContent}
+            usersAndStocks[users].append(fileContent) # this is the key added to the map here
 
-    except Exception as error : 
-       print("error in collectedDataAnalysis.py : " , error)
+        except Exception as error : 
+            print("error in collectedDataAnalysis.py : " , error)
 
-  return usersAndStocks
-
-
-
+    return usersAndStocks
 
 
 # this is the main function where all the analysis and the ai parsing will come together and then will be put together into the html format that will be send via mail
@@ -182,69 +132,51 @@ def usersAndStocksMap():
 # [NOTE] : need to add the iteration where all the stocks csv will be added analyzed one after the other
 def mailParser():
 
-  start = time.perf_counter()
-  usersAndStocks = {}
-  analyzedData = {}
+    start = time.perf_counter()
+    usersAndStocks = {}
+    analyzedData = {}
 
-  for singleUser in stockUsers:
+    for singleUser in stockUsers:
 
-    analyzedData.setdefault(singleUser, [])
+        analyzedData.setdefault(singleUser, [])
 
-    try :
-      #fetching the path where the data has been stored asper the user , for loop loops through all the email ids present 
-      path =  os.path.join(BASE_DIR,"Data_collection_automation","Analysed_files_data","csvFiles", singleUser)
-      stocksAdded = os.listdir(path)
-      print("LOOKING AT USER --->" , singleUser)
-      
+        try :
+            #fetching the path where the data has been stored asper the user , for loop loops through all the email ids present 
+            path =  os.path.join(BASE_DIR,"Data_collection_automation","Analysed_Files_data","csvFiles", singleUser)
+            stocksAdded = os.listdir(path)
+            print("LOOKING AT USER --->" , singleUser)
 
-      # this for loop then moves into the user email folder and fetch the path to all the stocks that has been added so it can use the panda function for analysis
-      for stocks in stocksAdded:
-        collectedPath =  os.path.join(BASE_DIR,"Data_collection_automation","Analysed_files_data","csvFiles", singleUser , stocks)
-        # print(stocks , " PATH : " , collectedPath)
+            # this for loop then moves into the user email folder and fetch the path to all the stocks that has been added so it can use the panda function for analysis
+            for stocks in stocksAdded:
+                collectedPath =  os.path.join(BASE_DIR,"Data_collection_automation","Analysed_Files_data","csvFiles", singleUser , stocks)
 
+                #calling the analysis funtions to fetch the data from the analysis 
+                snapshot = analysisPandas(collectedPath) # analyzed data that contains the data that has all mean median etc
 
+                try : 
+                    # this is a dict , where all the users email , stocks they added , that stocks analysis is put into one place
+                    # this is done so that each user will get 1 api call for all the stocks reducing cost.
+                    # adding the snapshot alone into the ai is enought but then ive added the stock name too , just incase
+                    analyzedData[singleUser].append({
+                        "stocks" : stocks,
+                        "analysis" : snapshot, 
+                    })
 
+                except Exception as error:
+                    print("error in dict in collectedDataAnalysis.py:" , error)
 
-        #calling the analysis funtions to fetch the data from the analysis 
-        snapshot = analysisPandas(collectedPath) # analyzed data that contains the data that has all mean median etc
-        # aiResponse = geminiResponse(snapshot)
-        aiResponse = "na"
-
-
-        # print(stocks , " ANALYSED DATA :", snapshot)
-        # print(stocks , " AI RESPONSE :", aiResponse)
-
-
-
-        try : 
-          # this is a dict , where all the users email , stocks they added , that stocks analysis is put into one place
-          # this is done so that each user will get 1 api call for all the stocks reducing cost.
-          # adding the snapshot alone into the ai is enought but then ive added the stock name too , just incase
-          analyzedData[singleUser].append({
-             "stocks" : stocks,
-             "analysis" : snapshot, 
-          })
-             
         except Exception as error:
-           print("error in dict in collectedDataAnalysis.py:" , error)
-
-    except Exception as error:
-       print("Error from collectedDataAnalysis.py" , error)
+            print("Error from collectedDataAnalysis.py" , error)
 
 
+    # loops plays an imp role where it makes sure that each users get just 1 api call , all the data has been added into the analyzedData as seen above and this data is used here to get the ai summary
+    # the ai summary is then added into the report [NOTE]: for now 
+    # then the complete report is then saved into a folder called reports from where the mail will be sent
+    # this loop is resent in the outer loop so each user gets only 1 iteration and making sure there is no data disputes happening in between
+    for userEmail , usersData in analyzedData.items():
 
-  # loops plays an imp role where it makes sure that each users get just 1 api call , all the data has been added into the analyzedData as seen above and this data is used here to get the ai summary
-  # the ai summary is then added into the report [NOTE]: for now 
-  # then the complete report is then saved into a folder called reports from where the mail will be sent
-  # this loop is resent in the outer loop so each user gets only 1 iteration and making sure there is no data disputes happening in between
-  for userEmail , usersData in analyzedData.items():
-    aiResponse = geminiResponse(usersData)
-
-
-    # report is the final template that holds all the html code that will be send to the user as the main report mail
-    #[NOTE] need to make this into a table format as multiple stocks will be involved
-    report = f"""
-                <!DOCTYPE html>
+        report = f"""
+                  <!DOCTYPE html>
                   <html lang="en">
                   <head>
                     <meta charset="UTF-8" />
@@ -252,113 +184,100 @@ def mailParser():
                     <title>Stock Report</title>
                   </head>
 
-                  <body style="margin:0;padding:0;background-color:#f0f1f5;font-family:Arial,Helvetica,sans-serif;color:#222222;">
+                  <body style="margin:0;padding:0;background-color:#f0f1f5;
+                               font-family:Arial,Helvetica,sans-serif;color:#222222;">
 
                     <div style="max-width:600px;margin:0 auto;background-color:#ffffff;">
 
                       <!-- Header -->
                       <div style="display:flex;align-items:center;padding:20px;gap:12px;">
-                        <img src="./logo.png" alt="Logo" style="width:28px;height:28px;display:block;" />
+                        <img src="./logo.png" alt="Logo" style="width:28px;height:28px;" />
                         <div style="font-size:28px;font-weight:700;">FinTech</div>
                       </div>
 
                       <!-- Hero -->
                       <div>
-                        <img src="https://raw.githubusercontent.com/Saifmk10/AGENT-BE/main/Stock_Automation/Data_collection_automation/hero.png" alt="Stock Report" style="width:100%;height:auto;display:block;"  />
-
+                        <img src="https://raw.githubusercontent.com/Saifmk10/AGENT-BE/main/Stock_Automation/Data_collection_automation/hero.png"
+                             style="width:100%;height:auto;display:block;" />
                       </div>
+                  """
 
-                      <!-- Summary -->
-                      <div style="padding:20px;font-size:16px;line-height:1.4;text-align:center;">
-                        We collected a total of <strong>{snapshot["count"]}</strong> price points.<br />
-                        Here’s your stock report.
-                      </div>
+        for stockData in usersData:
+            a = stockData["analysis"]
+            stock = stockData["stocks"].replace(".csv", "")
 
-                      <div style="height:1px;background-color:#bfc3c8;margin:20px 0;"></div>
+            report += f"""
+                          <div style="padding:20px;">
+                            <h3 style="margin-top:0;text-align:center;text-decoration:underline;">
+                              {stock}
+                            </h3>
 
-                      <!-- Central Tendency -->
-                      <div style="padding:20px;font-size:16px;line-height:1.4;">
-                        <h3 style="margin-top:0;text-decoration:underline;">Central Tendency</h3>
-                        Mean Price: <strong>₹{ snapshot["mean"]:.2f}</strong><br /><br />
-                        Median Price: <strong>₹{snapshot["median"]:.2f}</strong><br /><br />
-                        <span style="background-color:#fcfd5a;padding:2px 4px;font-weight:600;">
-                          Prices remained tightly clustered around the median.
-                        </span>
-                      </div>
+                            <table width="100%" cellpadding="8" cellspacing="0"
+                                   style="border-collapse:collapse;font-size:15px;">
 
-                      <div style="height:1px;background-color:#bfc3c8;margin:20px 0;"></div>
+                              <tr style="background-color:#f3f4f6;">
+                                <th style="border:1px solid #ccc;">Metric</th>
+                                <th style="border:1px solid #ccc;">Value</th>
+                              </tr>
 
-                      <!-- Distribution -->
-                      <div style="padding:20px;font-size:16px;line-height:1.4;">
-                        <h3 style="margin-top:0;text-decoration:underline;">Price Distribution</h3>
-                        Minimum: <strong>₹{snapshot["min"]:.2f}</strong><br /><br />
-                        Maximum: <strong>₹{snapshot["max"]:.2f}</strong><br /><br />
-                        IQR (25%–75%): <strong>₹{snapshot["q25"]:.2f} – ₹{snapshot["q75"]:.2f}</strong><br /><br />
-                        <span style="background-color:#fcfd5a;padding:2px 4px;font-weight:600;">
-                          Majority of trades occurred in a narrow band.
-                        </span>
-                      </div>
+                              <tr><td style="border:1px solid #ccc;">Data Points</td><td style="border:1px solid #ccc;">{int(a["count"])}</td></tr>
+                              <tr><td style="border:1px solid #ccc;">Mean Price</td><td style="border:1px solid #ccc;">₹{float(a["mean"]):.2f}</td></tr>
+                              <tr><td style="border:1px solid #ccc;">Median Price</td><td style="border:1px solid #ccc;">₹{float(a["median"]):.2f}</td></tr>
+                              <tr><td style="border:1px solid #ccc;">Lowest Price</td><td style="border:1px solid #ccc;">₹{float(a["min"]):.2f}</td></tr>
+                              <tr><td style="border:1px solid #ccc;">Highest Price</td><td style="border:1px solid #ccc;">₹{float(a["max"]):.2f}</td></tr>
+                              <tr><td style="border:1px solid #ccc;">25% Quartile</td><td style="border:1px solid #ccc;">₹{float(a["q25"]):.2f}</td></tr>
+                              <tr><td style="border:1px solid #ccc;">75% Quartile</td><td style="border:1px solid #ccc;">₹{float(a["q75"]):.2f}</td></tr>
+                              <tr><td style="border:1px solid #ccc;">Price Range</td><td style="border:1px solid #ccc;">₹{float(a["range"]):.2f}</td></tr>
+                              <tr><td style="border:1px solid #ccc;">Percentage Movement</td><td style="border:1px solid #ccc;">{float(a["percentage"]):.2f}%</td></tr>
+                              <tr><td style="border:1px solid #ccc;">Standard Deviation</td><td style="border:1px solid #ccc;">₹{float(a["std"]):.3f}</td></tr>
 
-                      <div style="height:1px;background-color:#bfc3c8;margin:20px 0;"></div>
+                            </table>
+                          </div>
 
-                      <!-- Volatility -->
-                      <div style="padding:20px;font-size:16px;line-height:1.4;">
-                        <h3 style="margin-top:0;text-decoration:underline;">Volatility</h3>
-                        Standard Deviation: <strong>₹{snapshot["std"]:.3f}</strong><br /><br />
-                        Intraday Range: <strong>₹{snapshot["range"]:.2f}</strong><br /><br />
-                        Percentage Movement: <strong>{snapshot["percentage"]:.2f}%</strong><br /><br />
-                        <span style="background-color:#fcfd5a;padding:2px 4px;font-weight:600;">
-                          Overall volatility remained low.
-                        </span>
-                      </div>
+                          <div style="height:1px;background-color:#bfc3c8;margin:20px 0;"></div>
+                      """                     
 
-                      <div style="height:1px;background-color:#bfc3c8;margin:20px 0;"></div>
-
-                      <!-- Interpretation -->
-                      <div style="padding:20px;font-size:16px;line-height:1.4;text-align:center;">
-                        <h3 style="margin-top:0;text-decoration:underline;">Market Interpretation</h3>
-                        {aiResponse}
-                      </div>
-
-                      <!-- Footer -->
-                      <div style="background-color:#070300;color:#f6f5f1;padding:25px 20px;font-size:14px;">
-                        <strong>Contact Developer</strong><br /><br />
-                        Call: <a href="tel:+918867715967" style="color:#f6f5f1;text-decoration:none;">+91 8867715967</a><br />
-                        Email: <a href="mailto:saifmkpvt@gmail.com" style="color:#f6f5f1;text-decoration:none;">saifmkpvt@gmail.com</a><br /><br />
-
-                        <div style="color:#bfc3c8;font-size:13px;">
-                          Bengaluru, Karnataka, India
-                        </div>
+            report += f"""
+                          <!-- Footer -->
+                          <div style="background-color:#070300;color:#f6f5f1;padding:25px 20px;font-size:14px;">
+                            <strong>Contact Developer</strong><br /><br />
+                            Call: <a href="tel:+918867715967" style="color:#f6f5f1;">+91 8867715967</a><br />
+                            Email: <a href="mailto:saifmkpvt@gmail.com" style="color:#f6f5f1;">saifmkpvt@gmail.com</a>
+                          </div>
 
                         <div style="color:#666666;font-size:12px;font-style:italic;margin-top:16px;">
                           This report is auto-generated for informational purposes only.
                           Do not rely on it as the sole basis for investment decisions.
                         </div>
-                      </div>
+                      </body>
+                    </html>
+                  """
 
-                    </div>
+        print(report)
 
-                  </body>
-                  </html>
-            """    
-
-    for stockData in usersData:
-      stockName = stockData["stocks"]    
-
-      # optional: remove .csv and make it html
-      file_name = stockName.replace(".csv", ".html")
-
-      user_dir = os.path.join(REPORT_DIR, userEmail)
-      os.makedirs(user_dir, exist_ok=True)
-
-      file_path = os.path.join(user_dir, file_name)
-
-      with open(file_path, "w", encoding="utf-8") as file:
-          file.write(report)
+           
+        #this is used to add the date , so that can be used as the file name easy to access and analyze
+        today = datetime.now()
+        dateFormat = today.strftime("%-d-%b-%Y").lower()  
+        file_name = f"{dateFormat}.html"
 
 
+        # checking if the file is available within the folder , if not available then the file and the folder both will be created
+        user_dir = os.path.join(REPORT_DIR, userEmail)
+        os.makedirs(user_dir, exist_ok=True)
 
-  end = time.perf_counter()
-  print("TIME TAKEN --->" , end - start)
+        # joining the path together to write the data into that location
+        file_path = os.path.join(user_dir, file_name)
 
-mailParser()
+        # writing the report data into the file created
+        with open(file_path, "w", encoding="utf-8") as file:
+            file.write(report)
+
+
+
+
+    end = time.perf_counter()
+    print("TIME TAKEN --->" , end - start)
+
+
+# mailParser()
