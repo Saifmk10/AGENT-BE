@@ -10,6 +10,7 @@ from pathlib import Path
 from google import genai
 import os , time
 from datetime import datetime
+import requests
 
 
 
@@ -102,6 +103,98 @@ def geminiResponse (analysis):
         return response.text
     except Exception as error : 
         print(error , "error in collectedDataAnalysis")
+
+
+
+# this function plays the role of the ai parsed message , there is a pre entered prompt that is used within the model where the data from the stock is added into this function to get a parsed user underatable output
+ollama_warmed = False  # module-level flag
+
+
+def ollamaResponse(data):
+    global ollama_warmed
+    url = "http://localhost:11434/api/generate"
+
+    # 🔹 ONE-TIME lightweight warm-up (no sleep, no output)
+    if not ollama_warmed:
+        try:
+            requests.post(
+                url,
+                json={
+                    "model": "phi3:mini",
+                    "prompt": "OK",
+                    "stream": False,
+                    "options": {
+                        "num_predict": 1,
+                        "temperature": 0
+                    }
+                },
+                timeout=10
+            )
+        except Exception:
+            pass
+
+        ollama_warmed = True
+
+    dataLoaded = {
+        "model": "phi3:mini",
+        "prompt": f"""
+{data}
+
+You are given analyzed stock data.
+
+Task:
+Generate concise, decision-oriented insights for a cautious investor.
+
+STRICT OUTPUT RULES:
+- Output ONLY valid HTML
+- Use ONLY <p>, <br />, and <strong>
+- Do NOT use lists, bullets, or symbols
+- Do NOT use the dollar symbol $
+- Use ONLY the rupee symbol ₹ if currency is mentioned
+- Do NOT invent placeholder names
+- Keep the design consistent
+
+PARAGRAPH RULES (MANDATORY):
+- EXACTLY 3 paragraphs
+- Each paragraph must be ONE complete sentence
+- Paragraph 1: 20–40 words
+- Paragraph 2: 20–40 words
+- Paragraph 3: 10–25 words
+
+CONTENT REQUIREMENTS:
+- Paragraph 1: describe recent price behaviour
+- Paragraph 2: explain what the volatility implies for risk
+- Paragraph 3: clearly state BUY or AVOID for a cautious investor
+
+DECISION RULE:
+- If movement is low, range-bound, or unclear → AVOID
+- Only say BUY if movement is clearly directional
+
+DECISION STYLING:
+- BUY → wrap paragraph in <p style="background-color:#e6f7e6;">
+- AVOID → wrap paragraph in <p style="background-color:#fdecea;">
+
+Generate ONLY the HTML fragment now.
+""",
+        "stream": False,
+        "options": {
+            "num_predict": 80,
+            "temperature": 0.2
+        }
+    }
+
+    try:
+        result = requests.post(url, json=dataLoaded, timeout=300)
+        return result.json().get("response", "<p>No AI response.</p>")
+
+    except requests.exceptions.ReadTimeout:
+        return "<p>AI analysis timed out due to system load.</p>"
+
+    except Exception:
+        return "<p>AI analysis unavailable.</p>"
+
+
+# ollamaResponse("ashok leyland starting price was 123 rs and then dropped to 102 rs")
 
 
 # function plays a role of validation and authentication , where a map and key is created for each user and the stock that the user has added , this map and key can be used for the stocks authentication
@@ -203,8 +296,10 @@ def mailParser():
                   """
 
         for stockData in usersData:
-            a = stockData["analysis"]
-            stock = stockData["stocks"].replace(".csv", "")
+            a = stockData["analysis"] # this contains all the details about the stock mean median all those
+            stock = stockData["stocks"].replace(".csv", "") #fetching individual stock name
+            aiResponse = ollamaResponse({"analysis" : a , "stockName" :stock})
+            print(stock , "--->" , aiResponse)
 
             report += f"""
                           <div style="padding:20px;">
@@ -234,10 +329,17 @@ def mailParser():
                             </table>
                           </div>
 
+                          <div style="padding:20px;font-size:16px;line-height:1.4;text-align:center;">
+                            <h3 style="margin-top:0;text-decoration:underline;">Market Interpretation</h3>
+                            {aiResponse}
+                          </div>
+
                           <div style="height:1px;background-color:#bfc3c8;margin:20px 0;"></div>
                       """                     
 
-            report += f"""
+            time.sleep(10)
+
+        report += f"""
                           <!-- Footer -->
                           <div style="background-color:#070300;color:#f6f5f1;padding:25px 20px;font-size:14px;">
                             <strong>Contact Developer</strong><br /><br />
@@ -253,8 +355,8 @@ def mailParser():
                     </html>
                   """
 
-        print(report)
-
+        
+        
            
         #this is used to add the date , so that can be used as the file name easy to access and analyze
         today = datetime.now()
@@ -280,4 +382,4 @@ def mailParser():
     print("TIME TAKEN --->" , end - start)
 
 
-# mailParser()
+mailParser()
