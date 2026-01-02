@@ -220,6 +220,7 @@ def usersAndStocksMap():
     return usersAndStocks
 
 
+
 # this is the main function where all the analysis and the ai parsing will come together and then will be put together into the html format that will be send via mail
 # the path for the analysisPanda function is being added within this function
 # [NOTE] : need to add the iteration where all the stocks csv will be added analyzed one after the other
