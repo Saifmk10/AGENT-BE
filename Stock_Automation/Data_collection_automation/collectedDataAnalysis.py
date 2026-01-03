@@ -114,7 +114,7 @@ def ollamaResponse(data):
     global ollama_warmed
     url = "http://localhost:11434/api/generate"
 
-    # 🔹 ONE-TIME lightweight warm-up (no sleep, no output)
+    # 🔹 One-time warm-up
     if not ollama_warmed:
         try:
             requests.post(
@@ -122,80 +122,124 @@ def ollamaResponse(data):
                 json={
                     "model": "phi3:mini",
                     "prompt": "OK",
-                    "stream": False,
                     "options": {
                         "num_predict": 1,
                         "temperature": 0
-                    }
+                    },
+                    "stream": False
                 },
                 timeout=10
             )
         except Exception:
             pass
-
         ollama_warmed = True
 
-    dataLoaded = {
+    # 🔹 Structured plain-text prompt
+    prompt = f"""
+                You are analysing stock performance data for a cautious investor.
+
+                DATA:
+                {data}
+
+                YOUR GOAL:
+                Turn the data into clear, practical insights that help a cautious investor understand the stock.
+
+                OUTPUT RULES (VERY IMPORTANT):
+                - Write EXACTLY 4 lines
+                - Do NOT use HTML
+                - Do NOT use bullet points or symbols
+                - Each line MUST start with one of these labels (no other labels allowed):
+                  SUMMARY:
+                  POSITIVE:
+                  NEGATIVE:
+                  DECISION:
+
+                CONTENT GUIDELINES:
+                - SUMMARY:
+                  Describe the recent price behaviour and overall trend.
+                  Length: 20–35 words.
+
+                - POSITIVE:
+                  Mention the strongest positive or supportive signal, if any.
+                  Length: 15–30 words.
+
+                - NEGATIVE:
+                  Mention the main risk, weakness, or concern.
+                  Length: 15–30 words.
+
+                - DECISION:
+                  Write ONLY ONE word — either BUY or AVOID.
+
+                DECISION LOGIC:
+                - If price movement is weak, unclear, sideways, or range-bound → AVOID
+                - Only write BUY if the movement is clearly directional and stable
+
+                CURRENCY RULES:
+                - You may use ONLY the rupee symbol ₹ and the dollar symbol $
+                - Do NOT use any other currency symbols
+
+                FINAL INSTRUCTION:
+                Return ONLY the 4 labelled lines.
+                Do not add explanations, greetings, or extra text.
+                """
+
+
+    payload = {
         "model": "phi3:mini",
-        "prompt": f"""
-{data}
-
-You are given analyzed stock data.
-
-Task:
-Generate concise, decision-oriented insights for a cautious investor.
-
-STRICT OUTPUT RULES:
-- Output ONLY valid HTML
-- Use ONLY <p>, <br />, and <strong>
-- Do NOT use lists, bullets, or symbols
-- Do NOT use the dollar symbol $
-- Use ONLY the rupee symbol ₹ if currency is mentioned
-- Do NOT invent placeholder names
-- Keep the design consistent
-
-PARAGRAPH RULES (MANDATORY):
-- EXACTLY 3 paragraphs
-- Each paragraph must be ONE complete sentence
-- Paragraph 1: 20–40 words
-- Paragraph 2: 20–40 words
-- Paragraph 3: 10–25 words
-
-CONTENT REQUIREMENTS:
-- Paragraph 1: describe recent price behaviour
-- Paragraph 2: explain what the volatility implies for risk
-- Paragraph 3: clearly state BUY or AVOID for a cautious investor
-
-DECISION RULE:
-- If movement is low, range-bound, or unclear → AVOID
-- Only say BUY if movement is clearly directional
-
-DECISION STYLING:
-- BUY → wrap paragraph in <p style="background-color:#e6f7e6;">
-- AVOID → wrap paragraph in <p style="background-color:#fdecea;">
-
-Generate ONLY the HTML fragment now.
-""",
-        "stream": False,
+        "prompt": prompt,
         "options": {
-            "num_predict": 80,
+            "num_predict": 100,
             "temperature": 0.2
-        }
+        },
+        "stream": False
     }
 
     try:
-        result = requests.post(url, json=dataLoaded, timeout=300)
-        return result.json().get("response", "<p>No AI response.</p>")
+        res = requests.post(url, json=payload, timeout=120)
+        text = res.json().get("response", "")
+
+        # 🔹 Parse response
+        summary = positive = negative = decision = ""
+
+        for line in text.split("\n"):
+            line = line.strip()
+            if line.startswith("SUMMARY:"):
+                summary = line.replace("SUMMARY:", "").strip()
+            elif line.startswith("POSITIVE:"):
+                positive = line.replace("POSITIVE:", "").strip()
+            elif line.startswith("NEGATIVE:"):
+                negative = line.replace("NEGATIVE:", "").strip()
+            elif line.startswith("DECISION:"):
+                decision = line.replace("DECISION:", "").strip().upper()
+
+        # 🔹 Build HTML deterministically
+        html = []
+
+        if summary:
+            html.append(f"<p>{summary}</p>")
+
+        if positive:
+            html.append(f"<p>{positive}</p>")
+
+        if negative:
+            html.append(f"<p>{negative}</p>")
+
+        if decision == "BUY":
+            html.append(
+                "<p style='background-color:#e6f7e6;'><strong>BUY</strong></p>"
+            )
+        else:
+            html.append(
+                "<p style='background-color:#fdecea;'><strong>AVOID</strong></p>"
+            )
+
+        return "".join(html)
 
     except requests.exceptions.ReadTimeout:
         return "<p>AI analysis timed out due to system load.</p>"
 
     except Exception:
         return "<p>AI analysis unavailable.</p>"
-
-
-# ollamaResponse("ashok leyland starting price was 123 rs and then dropped to 102 rs")
-
 
 # function plays a role of validation and authentication , where a map and key is created for each user and the stock that the user has added , this map and key can be used for the stocks authentication
 def usersAndStocksMap():
@@ -383,4 +427,4 @@ def mailParser():
     print("TIME TAKEN --->" , end - start)
 
 
-mailParser()
+# mailParser()

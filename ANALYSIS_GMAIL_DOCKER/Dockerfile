@@ -12,3 +12,4 @@ ENV PYTHONUNBUFFERED=1
 
 ENTRYPOINT ["python"]
 CMD ["gmailSubscription.py"]
+
