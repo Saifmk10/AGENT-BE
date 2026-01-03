@@ -37,7 +37,7 @@ def init_storage():
     os.makedirs(REPORT_DIR, exist_ok=True)
 
 
-stockUsers = os.listdir(DATA_DIR)
+# stockUsers = os.listdir(DATA_DIR)
 
 # bellow code is only for the purpose of testing and not for preoduction
 
@@ -108,8 +108,6 @@ def geminiResponse (analysis):
 
 # this function plays the role of the ai parsed message , there is a pre entered prompt that is used within the model where the data from the stock is added into this function to get a parsed user underatable output
 ollama_warmed = False  # module-level flag
-
-
 def ollamaResponse(data):
     global ollama_warmed
     url = "http://localhost:11434/api/generate"
@@ -244,7 +242,7 @@ def ollamaResponse(data):
 # function plays a role of validation and authentication , where a map and key is created for each user and the stock that the user has added , this map and key can be used for the stocks authentication
 def usersAndStocksMap():
     usersAndStocks = {}
-
+    stockUsers = os.listdir(DATA_DIR)
     # loop that loops through all the users who has added stock and the data has been colected already , the data is then accessed throught this loop for analysis
     for users in stockUsers:
         try:
@@ -273,6 +271,7 @@ def mailParser():
     start = time.perf_counter()
     usersAndStocks = {}
     analyzedData = {}
+    stockUsers = os.listdir(DATA_DIR)
 
     for singleUser in stockUsers:
 

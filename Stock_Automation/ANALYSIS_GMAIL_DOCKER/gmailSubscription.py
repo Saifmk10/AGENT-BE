@@ -2,7 +2,7 @@
 #in this module we cal the fn that is responsible for converting the csv into a useful html that will later be sned to the user
 
 import yagmail
-import collectedDataAnalysis
+from . import collectedDataAnalysis
 import os
 
 # all the base dir that will be used during the automation
@@ -13,7 +13,6 @@ REPORT_DIR = os.path.join(
      "Analysed_Files_data",
      "reports", 
 )
-users = os.listdir(REPORT_DIR)
 
 # calling the function that makes sure all the data is parsed into a html format and ready to be send as mail
 collectedDataAnalysis.mailParser()
@@ -23,6 +22,7 @@ yag = yagmail.SMTP('saifmohasaif216@gmail.com' , 'lefw fwqi eqnp lvvb')
 gmail = []
 content = ""
 
+users = os.listdir(REPORT_DIR)
 
 # for loop that looks into the rerport repo and fetch all the user email and also the data that has been provided for each other
 for userEmail in users:
@@ -38,18 +38,12 @@ for userEmail in users:
     # print(data)
 
     content = data
-    gmail.append(userEmail)
+    subject = "Daily stock price analysis summary"
     
+    try : 
+        yag.send(userEmail , subject , content)
+        print(f"MAIL SENT TO {userEmail}")
+    except Exception as error : 
+        print(f"ERROR IN AUTHENTICATION : {error}")
 
-
-print(gmail)
-
-
-subject = "Daily stock price analysis summary"
-
-try : 
-    yag.send(gmail , subject , content)
-    print(f"MAIL SENT TO {gmail}")
-except Exception as error : 
-    print(f"ERROR IN AUTHENTICATION : {error}")
-
+print(users)
