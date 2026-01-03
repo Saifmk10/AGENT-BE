@@ -6,7 +6,7 @@ import requests
 import time , csv
 import os
 from concurrent.futures import ThreadPoolExecutor
-from Data_fetching_from_db.fetching_tokenization import fetchingUserAddedStock
+from .Data_fetching_from_db.fetching_tokenization import fetchingUserAddedStock
 
 
 

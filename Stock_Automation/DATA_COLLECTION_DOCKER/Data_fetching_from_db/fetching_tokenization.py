@@ -3,7 +3,7 @@
 #once the data has been fetched the data will be then send to the logics reponsible for fetching the stock name and all the analysis
 #once the stock has been fetched it is then added into the fuzzy logic where the stock name is matched with the token that the api can understand
 # Data_fetching_from_db.
-from Data_fetching_from_db.connection import db       #a file thay contains all the code for the connection to the db
+from .connection import db       #a file thay contains all the code for the connection to the db
 import os , csv
 from rapidfuzz import process, fuzz
 
