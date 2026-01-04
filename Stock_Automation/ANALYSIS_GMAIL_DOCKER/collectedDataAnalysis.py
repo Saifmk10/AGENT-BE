@@ -110,7 +110,9 @@ def geminiResponse (analysis):
 ollama_warmed = False  # module-level flag
 def ollamaResponse(data):
     global ollama_warmed
-    url = "http://localhost:11434/api/generate"
+    # url = "http://localhost:11434/api/generate" #use for local testing
+    url = "http://ollama:11434/api/generate" #container url
+
 
     # 🔹 One-time warm-up
     if not ollama_warmed:

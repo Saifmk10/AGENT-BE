@@ -10,6 +10,5 @@ COPY . .
 
 ENV PYTHONUNBUFFERED=1
 
-ENTRYPOINT ["python"]
-CMD ["gmailSubscription.py"]
+CMD ["python" , "gmailSubscription.py"]
 
