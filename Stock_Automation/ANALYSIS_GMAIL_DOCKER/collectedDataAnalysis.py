@@ -107,14 +107,14 @@ def geminiResponse (analysis):
 
 
 # this function plays the role of the ai parsed message , there is a pre entered prompt that is used within the model where the data from the stock is added into this function to get a parsed user underatable output
-ollama_warmed = False  # module-level flag
+ollama_warmed = False # used to check if the ollama has cold start
 def ollamaResponse(data):
     global ollama_warmed
     # url = "http://localhost:11434/api/generate" #use for local testing
     url = "http://ollama:11434/api/generate" #container url
 
 
-    # 🔹 One-time warm-up
+    # runs the code once to prevent cold start
     if not ollama_warmed:
         try:
             requests.post(
@@ -134,7 +134,8 @@ def ollamaResponse(data):
             pass
         ollama_warmed = True
 
-    # 🔹 Structured plain-text prompt
+    #prompt used to define the models task \
+    #[NOTE] : update the prompt asper user requirement
     prompt = f"""
                 You are analysing stock performance data for a cautious investor.
 
@@ -183,7 +184,7 @@ def ollamaResponse(data):
                 Do not add explanations, greetings, or extra text.
                 """
 
-
+    # payload used to add all the data and the resouces togther into a small dict so it can be used to send the request
     payload = {
         "model": "phi3:mini",
         "prompt": prompt,
@@ -198,9 +199,10 @@ def ollamaResponse(data):
         res = requests.post(url, json=payload, timeout=120)
         text = res.json().get("response", "")
 
-        # 🔹 Parse response
+        
         summary = positive = negative = decision = ""
-
+        
+        # parsing the data obtainer from the ai into sperate categories 
         for line in text.split("\n"):
             line = line.strip()
             if line.startswith("SUMMARY:"):
@@ -212,7 +214,7 @@ def ollamaResponse(data):
             elif line.startswith("DECISION:"):
                 decision = line.replace("DECISION:", "").strip().upper()
 
-        # 🔹 Build HTML deterministically
+        #building the html
         html = []
 
         if summary:
