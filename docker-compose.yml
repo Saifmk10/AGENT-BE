@@ -1,4 +1,6 @@
 services:
+
+  # fetched compose used to run fetch script to fetch all the data for the stocks
   fetcher:
     build: ./Stock_Automation/DATA_COLLECTION_DOCKER
     environment:
@@ -6,8 +8,8 @@ services:
     volumes:
       - ./stock-data:/app/Data_collection_automation/Analysed_Files_data
     command: python run.py
-    # ❌ NO restart policy (this is a job)
 
+  #analyzer compose used to run the data analysis and also the gmail subscription automation
   analyzer:
     build: ./Stock_Automation/ANALYSIS_GMAIL_DOCKER
     environment:
@@ -15,14 +17,13 @@ services:
     volumes:
       - ./stock-data:/app/Data_collection_automation/Analysed_Files_data
     command: python gmailSubscription.py
-    # ❌ NO depends_on
-    # ❌ NO restart policy
-
+   
+  # runs the ollama model from where he anaylyzed access the data form the 
   ollama:
     image: ollama/ollama
     volumes:
       - ollama-data:/root/.ollama
-    restart: unless-stopped   # ✅ infra stays alive
+    restart: unless-stopped 
 
 volumes:
   ollama-data:
