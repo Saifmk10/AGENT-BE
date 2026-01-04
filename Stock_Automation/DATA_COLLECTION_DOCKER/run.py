@@ -1,10 +1,36 @@
-# entry point for the fetchinfStock.py as the paths were not working well this was added
-#any execution thay need to happen on the fetchingStock.py needs to happen in this file ONLY
+# entry point for fetchingStock.py
+# any execution that needs to happen should happen here ONLY
+
+import os
+
+
+# ---- bootstrap config (GLOBAL) ----
+BASE_DIR = os.getcwd()  # inside Docker this = /app
+
+DATA_DIR = os.path.join(
+    BASE_DIR,
+    "data",
+    "csvFiles",
+)
+
+REPORT_DIR = os.path.join(
+    BASE_DIR,
+    "data",
+    "reports",
+)
+
+
+def init_storage():
+    os.makedirs(DATA_DIR, exist_ok=True)
+    os.makedirs(REPORT_DIR, exist_ok=True)
+
 
 if __name__ == "__main__":
-    # import ONLY after runtime starts
-    from Stock_Automation.ANALYSIS_GMAIL_DOCKER.collectedDataAnalysis import init_storage
-    from Stock_Automation.DATA_COLLECTION_DOCKER.fetchingStock import main
+    # import AFTER runtime starts
+    from fetchingStock import main
+
+     # from Stock_Automation.ANALYSIS_GMAIL_DOCKER.collectedDataAnalysis import init_storage
+    # from Stock_Automation.DATA_COLLECTION_DOCKER.fetchingStock import main
 
     # 1. ensure folders exist
     init_storage()

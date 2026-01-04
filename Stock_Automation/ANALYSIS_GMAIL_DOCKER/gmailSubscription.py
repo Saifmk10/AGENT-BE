@@ -2,11 +2,11 @@
 #in this module we cal the fn that is responsible for converting the csv into a useful html that will later be sned to the user
 
 import yagmail
-from . import collectedDataAnalysis
+import collectedDataAnalysis
 import os
 
 # all the base dir that will be used during the automation
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+BASE_DIR = os.environ.get("BASE_DIR", os.getcwd())
 REPORT_DIR = os.path.join(
     BASE_DIR,
      "Data_collection_automation",

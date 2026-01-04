@@ -6,7 +6,7 @@ import requests
 import time , csv
 import os
 from concurrent.futures import ThreadPoolExecutor
-from .Data_fetching_from_db.fetching_tokenization import fetchingUserAddedStock
+from Data_fetching_from_db.fetching_tokenization import fetchingUserAddedStock
 
 
 
@@ -35,7 +35,10 @@ def priceFetcher(stockName):
     # emailDir = fetchingEmail['email']
     # print(emailDir)
 
-    BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    # FOR LOCAL TESTING
+    # BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+    BASE_DIR = os.environ.get("BASE_DIR", os.getcwd())
 
     while True :
         try :
