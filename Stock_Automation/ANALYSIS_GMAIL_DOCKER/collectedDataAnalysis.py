@@ -14,7 +14,7 @@ import requests
 
 
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) # fetching the root path
+BASE_DIR = os.environ.get("BASE_DIR", os.getcwd()) # fetching the root path
 # print(BASE_DIR)
 
 DATA_DIR = os.path.join(
@@ -426,4 +426,5 @@ def mailParser():
     print("TIME TAKEN --->" , end - start)
 
 
-# mailParser()
+
+# the function mailParser is being called within the gmailSubscription 

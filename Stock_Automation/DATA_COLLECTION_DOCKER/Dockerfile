@@ -11,5 +11,5 @@ COPY . .
 ENV PYTHONUNBUFFERED=1
 
 ENTRYPOINT ["python"]
-CMD [".py"]
+CMD ["run.py"]
 
