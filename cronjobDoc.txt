@@ -1,0 +1,6 @@
+20 9 * * 1-5 cd /home/saifmk10/development/AGENT-BE && /usr/bin/docker compose up -d fetcher >> /home/saifmk10/AGENT-DATA/Stock-Data/fetcher-cron.log 2>&1
+45 15 * * 1-5 cd /home/saifmk10/development/AGENT-BE/fetcher && /usr/bin/docker compose stop >> /home/saifmk10/AGENT-DATA/Stock-Data/fetcher-stop.log 2>&1
+
+
+46 15 * * 1-5 cd /home/saifmk10/development/AGENT-BE && /usr/bin/docker compose up -d analyzer >> /home/saifmk10/AGENT-DATA/Stock-Data/analyzer-cron.log 2>&1
+0 16 * * 1-5 cd /home/saifmk10/development/AGENT-BE/analyzer && /usr/bin/docker compose stop >> /home/saifmk10/AGENT-DATA/Stock-Data/analyzer-stop.log 2>&1

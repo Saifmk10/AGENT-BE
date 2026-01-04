@@ -5,8 +5,8 @@ services:
     build: ./Stock_Automation/DATA_COLLECTION_DOCKER
     environment:
       BASE_DIR: /app
-    volumes:
-      - ./stock-data:/app/Data_collection_automation/Analysed_Files_data
+    volumes: # change the vol when needed , when the data need to be added into a specific location of the system
+      - /home/saifmk10/AGENT-DATA/Stock-Data:/app/Data_collection_automation/Analysed_Files_data
     command: python run.py
 
   #analyzer compose used to run the data analysis and also the gmail subscription automation
@@ -15,7 +15,7 @@ services:
     environment:
       BASE_DIR: /app
     volumes:
-      - ./stock-data:/app/Data_collection_automation/Analysed_Files_data
+      - /home/saifmk10/AGENT-DATA/Stock-Data:/app/Data_collection_automation/Analysed_Files_data
     command: python gmailSubscription.py
    
   # runs the ollama model from where he anaylyzed access the data form the 
