@@ -6,10 +6,8 @@ COPY requirements.txt .
 
 RUN pip install -r requirements.txt
 
-COPY . . 
+COPY . .
 
 ENV PYTHONUNBUFFERED=1
 
-ENTRYPOINT ["python"]
-CMD ["run.py"]
-
+CMD ["python", "run.py"]

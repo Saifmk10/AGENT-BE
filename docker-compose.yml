@@ -1,0 +1,28 @@
+services:
+  fetcher:
+    build: ./Stock_Automation/DATA_COLLECTION_DOCKER
+    environment:
+      BASE_DIR: /app
+    volumes:
+      - ./stock-data:/app/Data_collection_automation/Analysed_Files_data
+    command: python run.py
+    # ❌ NO restart policy (this is a job)
+
+  analyzer:
+    build: ./Stock_Automation/ANALYSIS_GMAIL_DOCKER
+    environment:
+      BASE_DIR: /app
+    volumes:
+      - ./stock-data:/app/Data_collection_automation/Analysed_Files_data
+    command: python gmailSubscription.py
+    # ❌ NO depends_on
+    # ❌ NO restart policy
+
+  ollama:
+    image: ollama/ollama
+    volumes:
+      - ollama-data:/root/.ollama
+    restart: unless-stopped   # ✅ infra stays alive
+
+volumes:
+  ollama-data:
