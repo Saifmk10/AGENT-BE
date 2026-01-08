@@ -27,6 +27,7 @@ for user in fetchingDBData:
 def priceFetcher(stockName):
 
     url = f"https://the-chat-app-api-git-main-saifmks-projects.vercel.app/api/searchedapi.py?symbol={stockName}"
+    url = f"https://stock-api.saifmk.website/stock/{stockName}"
     
     
     # setting the path for adding the csv into (remains the same for the vm)
@@ -101,7 +102,7 @@ def priceFetcher(stockName):
 # main function is the runnnig function this is executed with the help of the run.py function, done to prevent the modules and folder conflicts
 def main () :
 
-    jobs = set()
+    jobs = set() # here the jobs are the stock name that is being fetahced from the users who has the subscription
 
     for user in fetchingDBData:
         stockNames = user["stocks"]
