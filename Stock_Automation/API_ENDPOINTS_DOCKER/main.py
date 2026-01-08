@@ -17,4 +17,4 @@ def read_root():
 @app.get("/stock/{symbol}")
 
 def get_stock(symbol : str):
-    return userSearchedStockPrice(symbol)
+    return userSearchedStockPrice(symbol) # current api end point being used through the cloudflare is -----> [NOTE] -----> https://stock-api.saifmk.website/
