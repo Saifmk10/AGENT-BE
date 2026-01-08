@@ -34,20 +34,19 @@ services:
 
   # this will run the localhost:1555 , and then itll be used to activate the tunnel to make the api accessable publicly
   fastApi:
-    image : fast-api:latest 
-    restart : unless-stopped
+    image: ef9ea0a1fa3c
+    restart: unless-stopped
     ports:
-    - "1555:1555"
-
+      - "1555:1555"
 
 
   # running the api tunnel for the cloudflare
   cloudFlare:
-  image: cloudflare/cloudflared:latest
-  command: tunnel run --config /etc/cloudflared/config.yml
-  restart: unless-stopped
-  volumes:
-    - /home/saifmk10/.cloudflared:/etc/cloudflared
+    image: cloudflare/cloudflared:latest
+    command: tunnel run --config /etc/cloudflared/config.yml
+    restart: unless-stopped
+    volumes:
+      - /home/saifmk10/.cloudflared:/etc/cloudflared
 
 
 

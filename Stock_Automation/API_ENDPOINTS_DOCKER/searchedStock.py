@@ -1,3 +1,5 @@
+# stock api the does the search , where users can search for any stock as needed with the user understandable form , the searched stock will be convereted into the ticker and then price will be fetched
+
 import json
 import csv
 import os
@@ -52,7 +54,7 @@ def fuzzyLogic(userSearchedStock, stock):
 
 
 # function that uses the matched ticker and scrapes google finance
-def userSearchedStockPrice(stockName):
+def SearchedStockPrice(stockName):
     tickerList, stockList = loadTickerList()
 
     stockTicket = fuzzyLogic(stockName, stockList)
@@ -99,5 +101,5 @@ def userSearchedStockPrice(stockName):
         }
 
 
-output = userSearchedStockPrice("Ashok Leyland")
-print(output)
+# output = userSearchedStockPrice("Ashok leyland")
+# print(output)

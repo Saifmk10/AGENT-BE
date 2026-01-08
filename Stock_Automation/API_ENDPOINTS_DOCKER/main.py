@@ -2,7 +2,8 @@
 # these end points will be make public with the help of cloudflare tunnel
 
 from fastapi import FastAPI
-from searchedapi import userSearchedStockPrice
+from priceFetcher import stockPriceFetcher
+from searchedStock import SearchedStockPrice
 
 app = FastAPI()
 
@@ -17,4 +18,10 @@ def read_root():
 @app.get("/stock/{symbol}")
 
 def get_stock(symbol : str):
-    return userSearchedStockPrice(symbol) # current api end point being used through the cloudflare is -----> [NOTE] -----> https://stock-api.saifmk.website/
+    return stockPriceFetcher(symbol) # current api end point being used through the cloudflare is -----> [NOTE] -----> https://stock-api.saifmk.website/stock
+
+
+@app.get("/search/{symbol}")
+
+def get_search(symbol : str):
+    return SearchedStockPrice(symbol)
