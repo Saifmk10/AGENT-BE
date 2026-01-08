@@ -9,6 +9,9 @@ services:
       - /home/saifmk10/AGENT-DATA/Stock-Data:/app/Data_collection_automation/Analysed_Files_data
     command: python run.py
 
+
+
+
   #analyzer compose used to run the data analysis and also the gmail subscription automation
   analyzer:
     build: ./Stock_Automation/ANALYSIS_GMAIL_DOCKER
@@ -17,13 +20,37 @@ services:
     volumes:
       - /home/saifmk10/AGENT-DATA/Stock-Data:/app/Data_collection_automation/Analysed_Files_data
     command: python gmailSubscription.py
-   
+
+
+
   # runs the ollama model from where he anaylyzed access the data form the 
   ollama:
     image: ollama/ollama
     volumes:
       - ollama-data:/root/.ollama
     restart: unless-stopped 
+
+
+
+  # this will run the localhost:1555 , and then itll be used to activate the tunnel to make the api accessable publicly
+  fastApi:
+    image : fast-api:latest 
+    restart : unless-stopped
+    ports:
+    - "1555:1555"
+
+
+
+  # running the api tunnel for the cloudflare
+  cloudFlare:
+  image: cloudflare/cloudflared:latest
+  command: tunnel run --config /etc/cloudflared/config.yml
+  restart: unless-stopped
+  volumes:
+    - /home/saifmk10/.cloudflared:/etc/cloudflared
+
+
+
 
 volumes:
   ollama-data:

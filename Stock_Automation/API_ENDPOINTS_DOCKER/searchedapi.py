@@ -28,37 +28,7 @@ def userSearchedStockPrice(stockName):
                 "stockPrice": f"Error: {str(error)}"
             }
 
-# class handler(BaseHTTPRequestHandler):
-#     def do_GET(self):
-#         # Parse query parameters
-#         query = parse_qs(urlparse(self.path).query)
-#         stockName = query.get("symbol", [None])[0]  # e.g. ?symbol=TCS
 
-#         # Validate input
-#         if not stockName:
-#             self.send_response(400)
-#             self.send_header("Content-type", "application/json")
-#             self.end_headers()
-#             self.wfile.write(json.dumps({"error": "Missing 'symbol' query parameter"}).encode())
-#             return
-
-#         # Call your scraper
-#         data = userSearchedStockPrice("ASHOKLEY")
-
-#         # Send response
-#         self.send_response(200)
-#         self.send_header("Content-type", "application/json")
-#         self.end_headers()
-#         self.wfile.write(json.dumps(data).encode())
-
-# used to run the code in local , used for debugging and testing purpose only
-
-# if __name__ == "__main__":
-#     PORT = 8000
-#     server = HTTPServer(("localhost", PORT), handler)
-#     print(f"Local server running at http://localhost:{PORT}")
-#     print("Use curl to test: curl http://localhost:8000")
-#     server.serve_forever()
 
 data = userSearchedStockPrice("ASHOKLEY")
 print(data)
