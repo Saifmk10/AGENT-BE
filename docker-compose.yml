@@ -35,6 +35,7 @@ services:
   # this will run the localhost:1555 , and then itll be used to activate the tunnel to make the api accessable publicly
   fastApi:
     image: ef9ea0a1fa3c
+    build : ./Stock_Automation/API_ENDPOINTS_DOCKER
     restart: unless-stopped
     ports:
       - "1555:1555"
