@@ -4,6 +4,9 @@
 from fastapi import FastAPI
 from priceFetcher import stockPriceFetcher
 from searchedStock import SearchedStockPrice
+from stock_recommendation_endpoints.gainers import gainers
+from stock_recommendation_endpoints.looser import looser
+from stock_recommendation_endpoints.mostActive import mostActive
 
 app = FastAPI()
 
@@ -25,3 +28,21 @@ def get_stock(symbol : str):
 
 def get_search(symbol : str):
     return SearchedStockPrice(symbol)
+
+
+@app.get("/gainer")
+
+def get_gainer():
+    return gainers()
+
+
+@app.get("/looser")
+
+def get_looser():
+    return looser()
+
+
+@app.get("/mostActive")
+
+def get_mostActive():
+    return mostActive()
