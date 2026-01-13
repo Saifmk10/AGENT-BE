@@ -27,10 +27,21 @@ def mostActive():
                 name_tag = li.find("div", {"class": "ZvmM7"})
                 price_tag = li.find("div", {"class": "xVyTdb ytSBif"})
 
-                if name_tag and price_tag:
+                # fetching the current price like , +90 , -28
+                current_price_1 = li.find("div" ,class_="xVyTdb ghTit")
+                current_price_2 = current_price_1.find("div" ,  class_="SEGxAb")
+                current_price_3 = current_price_2.find("div" , class_="BAftM")
+                current_price_4 = current_price_3.find("span" , class_="P2Luy Ez2Ioe")
+
+                # this is the shorter version of the above , this is being used currently above one is as backup
+                current_price_tag = li.select_one("div.xVyTdb.ghTit div.SEGxAb div.BAftM span.P2Luy")
+    
+
+                if name_tag and price_tag :
                     name = name_tag.text.strip()
                     price = price_tag.text.strip().replace("\u20b9" , "") #stock price filtered and raedy to e appended into the list
-                    stocks.append({"name": name, "price": price})
+                    current_price = current_price_tag.text.strip()
+                    stocks.append({"name": name, "price": price , "current" : current_price})
 
             return {"trending_stocks": stocks[:20]}
 
