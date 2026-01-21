@@ -19,7 +19,7 @@ services:
       BASE_DIR: /app
     volumes:
       - /home/saifmk10/AGENT-DATA/Stock-Data:/app/Data_collection_automation/Analysed_Files_data
-    command: python gmailSubscription.py
+    command: python run.py
 
 
 

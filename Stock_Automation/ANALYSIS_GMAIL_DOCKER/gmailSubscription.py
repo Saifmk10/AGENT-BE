@@ -4,46 +4,45 @@
 import yagmail
 import collectedDataAnalysis
 import os
-
+from cleaningCollectedCsv import cleaningData
 # all the base dir that will be used during the automation
-BASE_DIR = os.environ.get("BASE_DIR", os.getcwd())
-REPORT_DIR = os.path.join(
-    BASE_DIR,
-     "Data_collection_automation",
-     "Analysed_Files_data",
-     "reports", 
-)
+# BASE_DIR = os.environ.get("BASE_DIR", os.getcwd())
+REPORT_DIR =  "/home/saifmk10/AGENT-DATA/Stock-Data/reports"
 
-# calling the function that makes sure all the data is parsed into a html format and ready to be send as mail
-collectedDataAnalysis.mailParser()
+def main():
 
-# all the gamil requirements needed to send the mail to all the listed users
-yag = yagmail.SMTP('saifmohasaif216@gmail.com' , 'lefw fwqi eqnp lvvb') 
-gmail = []
-content = ""
+    # calling the function that makes sure all the data is parsed into a html format and ready to be send as mail
+    collectedDataAnalysis.mailParser()
 
-users = os.listdir(REPORT_DIR)
+    # all the gamil requirements needed to send the mail to all the listed users
+    yag = yagmail.SMTP('saifmohasaif216@gmail.com' , 'lefw fwqi eqnp lvvb') 
+    gmail = []
+    content = ""
 
-# for loop that looks into the rerport repo and fetch all the user email and also the data that has been provided for each other
-for userEmail in users:
-    USERS_DIR = os.path.join(REPORT_DIR , userEmail)
-    # print(userEmail)
-    finalReport = os.listdir(USERS_DIR)
-    # print(finalReport[0])
-    REPORT_FILES = os.path.join(USERS_DIR , finalReport[0])
+    users = os.listdir(REPORT_DIR)
 
-    with open(REPORT_FILES , "r" , encoding="utf-8") as file:
-        data = file.read()
+    # for loop that looks into the rerport repo and fetch all the user email and also the data that has been provided for each other
+    for userEmail in users:
+        USERS_DIR = os.path.join(REPORT_DIR , userEmail)
+        # print(userEmail)
+        finalReport = os.listdir(USERS_DIR)
+        # print(finalReport[0])
+        REPORT_FILES = os.path.join(USERS_DIR , finalReport[0])
 
-    # print(data)
+        with open(REPORT_FILES , "r" , encoding="utf-8") as file:
+            data = file.read()
 
-    content = data
-    subject = "Daily stock price analysis summary"
-    
-    try : 
-        yag.send(userEmail , subject , content)
-        print(f"MAIL SENT TO {userEmail}")
-    except Exception as error : 
-        print(f"ERROR IN AUTHENTICATION : {error}")
+        # print(data)
 
-print(users)
+
+        content = data
+        subject = "Daily stock price analysis summary"
+
+        try : 
+            yag.send(userEmail , subject , content)
+            print(f"MAIL SENT TO {userEmail}")
+            cleaningData()
+        except Exception as error : 
+            print(f"ERROR IN AUTHENTICATION : {error}")
+
+    print(users)
