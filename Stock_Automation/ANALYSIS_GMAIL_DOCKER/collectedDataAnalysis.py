@@ -12,24 +12,29 @@ import os , time
 from datetime import datetime
 import requests
 
+# from DATA_CLEANSING_DOCKER.cleaningCollectedCsv import cleaningData
+from cleaningCollectedCsv import cleaningData
 
 
 BASE_DIR = os.environ.get("BASE_DIR", os.getcwd()) # fetching the root path
 # print(BASE_DIR)
 
-DATA_DIR = os.path.join(
-     BASE_DIR,
-     "Data_collection_automation",
-     "Analysed_Files_data",
-     "csvFiles", 
-  )
+# DATA_DIR = os.path.join(
+#      BASE_DIR,
+#      "Data_collection_automation",
+#      "Analysed_Files_data",
+#      "csvFiles", 
+#   )
 
-REPORT_DIR = os.path.join(
-    BASE_DIR,
-     "Data_collection_automation",
-     "Analysed_Files_data",
-     "reports", 
-)
+# REPORT_DIR = os.path.join(
+#     BASE_DIR,
+#      "Data_collection_automation",
+#      "Analysed_Files_data",
+#      "reports", 
+# )
+
+DATA_DIR = "/home/saifmk10/AGENT-DATA/Stock-Data/TEST/csvFiles"
+REPORT_DIR = "/home/saifmk10/AGENT-DATA/Stock-Data/TEST/reports"
 
 # function that makes sure the folders are created , as the folders are ignored my default 
 def init_storage():
@@ -79,6 +84,11 @@ def analysisPandas (path):
     }
     # print(snapshot["percentage"])
 
+    PATH_ACCESS = f"/home/saifmk10/AGENT-DATA/Stock-Data/reports/{stockName}.json"
+
+    
+
+
     return snapshot
 
 
@@ -110,8 +120,8 @@ def geminiResponse (analysis):
 ollama_warmed = False # used to check if the ollama has cold start
 def ollamaResponse(data):
     global ollama_warmed
-    # url = "http://localhost:11434/api/generate" #use for local testing
-    url = "http://ollama:11434/api/generate" #container url
+    url = "http://localhost:11434/api/generate" #use for local testing
+    ##url = "http://ollama:11434/api/generate" #container url works only for docker
 
 
     # runs the code once to prevent cold start
@@ -283,17 +293,17 @@ def mailParser():
 
         try :
             #fetching the path where the data has been stored asper the user , for loop loops through all the email ids present 
-            path =  os.path.join(BASE_DIR,"Data_collection_automation","Analysed_Files_data","csvFiles", singleUser)
+            path =  os.path.join(DATA_DIR, singleUser)
             stocksAdded = os.listdir(path)
             print("LOOKING AT USER --->" , singleUser)
 
             # this for loop then moves into the user email folder and fetch the path to all the stocks that has been added so it can use the panda function for analysis
             for stocks in stocksAdded:
-                collectedPath =  os.path.join(BASE_DIR,"Data_collection_automation","Analysed_Files_data","csvFiles", singleUser , stocks)
+                collectedPath =  os.path.join(DATA_DIR, singleUser , stocks)
 
                 #calling the analysis funtions to fetch the data from the analysis 
                 snapshot = analysisPandas(collectedPath) # analyzed data that contains the data that has all mean median etc
-
+                
                 try : 
                     # this is a dict , where all the users email , stocks they added , that stocks analysis is put into one place
                     # this is done so that each user will get 1 api call for all the stocks reducing cost.
@@ -423,12 +433,14 @@ def mailParser():
         with open(file_path, "w", encoding="utf-8") as file:
             file.write(report)
 
+        cleaningData()
+
 
 
 
     end = time.perf_counter()
     print("TIME TAKEN --->" , end - start)
 
-
+mailParser()
 
 # the function mailParser is being called within the gmailSubscription 

@@ -8,7 +8,7 @@ import os
 from concurrent.futures import ThreadPoolExecutor
 from Data_fetching_from_db.fetching_tokenization import fetchingUserAddedStock
 
-
+DATA_DIR = "/home/saifmk10/AGENT-DATA/Stock-Data/TEST/csvFiles"
 
 HEADER = ["EXTRACTED_DATE","EXTRACTED_TIME","STOCK_NAME","EXTRACTED_PRICE"]
 fetchingDBData = fetchingUserAddedStock() # using the data that was fetched form the db
@@ -27,7 +27,7 @@ for user in fetchingDBData:
 def priceFetcher(stockName):
 
     url = f"https://the-chat-app-api-git-main-saifmks-projects.vercel.app/api/searchedapi.py?symbol={stockName}"
-    url = f"https://stock-api.saifmk.website/stock/{stockName}"
+    # url = f"https://stock-api.saifmk.website/stock/{stockName}"
     
     
     # setting the path for adding the csv into (remains the same for the vm)
@@ -64,10 +64,7 @@ def priceFetcher(stockName):
             for email in stock_to_emails.get(stockName, []):
                 print(email)
                 CSV_DIR = os.path.join(
-                    BASE_DIR,
-                    "Data_collection_automation",
-                    "Analysed_Files_data",
-                    "csvFiles",
+                    DATA_DIR,
                     email
                 )
                 os.makedirs(CSV_DIR ,exist_ok=True)
@@ -95,14 +92,14 @@ def priceFetcher(stockName):
         except KeyboardInterrupt:
             raise
         except Exception as e:
-            print("THREAD CRASHED WITH [ln 90]:", repr(e))
+            print("THREAD CRASHED WITH [ln 98]:", repr(e))
             raise
 
 
 # main function is the runnnig function this is executed with the help of the run.py function, done to prevent the modules and folder conflicts
 def main () :
 
-    jobs = set() # here the jobs are the stock name that is being fetahced from the users who has the subscription
+    jobs = set() # here the jobs are the stock name that is being fetched from the users who has the subscription
 
     for user in fetchingDBData:
         stockNames = user["stocks"]
@@ -118,3 +115,5 @@ def main () :
             executor.map(priceFetcher, jobs)
     except KeyboardInterrupt:
         print("FETCHING STOCK STOPPED BY KEYBOARD..")
+
+# main()
