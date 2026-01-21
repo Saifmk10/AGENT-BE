@@ -16,7 +16,7 @@ import requests
 from cleaningCollectedCsv import cleaningData
 
 
-BASE_DIR = os.environ.get("BASE_DIR", os.getcwd()) # fetching the root path
+#BASE_DIR = os.environ.get("BASE_DIR", os.getcwd()) # fetching the root path
 # print(BASE_DIR)
 
 # DATA_DIR = os.path.join(
@@ -33,8 +33,14 @@ BASE_DIR = os.environ.get("BASE_DIR", os.getcwd()) # fetching the root path
 #      "reports", 
 # )
 
-DATA_DIR = "/home/saifmk10/AGENT-DATA/Stock-Data/TEST/csvFiles"
-REPORT_DIR = "/home/saifmk10/AGENT-DATA/Stock-Data/TEST/reports"
+
+#[NOTE] : THIS IS THE PATH USED FOR THE LOCAL TESTING ONLY
+# DATA_DIR = "/home/saifmk10/AGENT-DATA/Stock-Data/TEST/csvFiles"
+# REPORT_DIR = "/home/saifmk10/AGENT-DATA/Stock-Data/TEST/reports"
+
+#[NOTE] : THIS IS THE PATH USED FOR THE PRODUCTION CODE ONLY
+DATA_DIR = "/home/saifmk10/AGENT-DATA/Stock-Data/csvFiles"
+REPORT_DIR = "/home/saifmk10/AGENT-DATA/Stock-Data/reports"
 
 # function that makes sure the folders are created , as the folders are ignored my default 
 def init_storage():
@@ -120,8 +126,8 @@ def geminiResponse (analysis):
 ollama_warmed = False # used to check if the ollama has cold start
 def ollamaResponse(data):
     global ollama_warmed
-    url = "http://localhost:11434/api/generate" #use for local testing
-    ##url = "http://ollama:11434/api/generate" #container url works only for docker
+    #url = "http://localhost:11434/api/generate" #use for local testing
+    url = "http://ollama:11434/api/generate" #container url works only for docker
 
 
     # runs the code once to prevent cold start
@@ -433,7 +439,7 @@ def mailParser():
         with open(file_path, "w", encoding="utf-8") as file:
             file.write(report)
 
-        cleaningData()
+        # cleaningData()
 
 
 
@@ -441,6 +447,6 @@ def mailParser():
     end = time.perf_counter()
     print("TIME TAKEN --->" , end - start)
 
-mailParser()
+# mailParser()
 
 # the function mailParser is being called within the gmailSubscription 
