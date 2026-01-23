@@ -17,6 +17,7 @@ services:
     build: ./Stock_Automation/ANALYSIS_GMAIL_DOCKER
     environment:
       BASE_DIR: /app
+      DOCKER_PATH: /app/Data_collection_automation/Analysed_Files_data
     volumes:
       - /home/saifmk10/AGENT-DATA/Stock-Data:/app/Data_collection_automation/Analysed_Files_data
     command: python run.py

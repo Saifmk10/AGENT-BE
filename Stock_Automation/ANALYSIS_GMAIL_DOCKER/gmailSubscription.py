@@ -5,9 +5,12 @@ import yagmail
 import collectedDataAnalysis
 import os
 from cleaningCollectedCsv import cleaningData
-# all the base dir that will be used during the automation
-# BASE_DIR = os.environ.get("BASE_DIR", os.getcwd())
-REPORT_DIR =  "/home/saifmk10/AGENT-DATA/Stock-Data/reports"
+
+# USE this for local testing only , if tested locally change it to the test dir
+# REPORT_DIR =  "/home/saifmk10/AGENT-DATA/Stock-Data/reports"
+
+DOCKER_PATH = os.environ.get("DOCKER_PATH")
+REPORT_DIR = os.path.join(DOCKER_PATH , "reports")
 
 def main():
 
