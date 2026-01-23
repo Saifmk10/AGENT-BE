@@ -2,9 +2,10 @@ import os
 from pathlib import Path
 
 #this will fetch the path where the csv file are added to [NOTE] : change the path if the file path has been changed
-PATH_ACCESS = "/home/saifmk10/AGENT-DATA/Stock-Data/csvFiles/"
+# PATH_ACCESS = "/home/saifmk10/AGENT-DATA/Stock-Data/csvFiles/" # use for TESTING ONLY
 
-
+DOCKER_PATH = os.environ.get("DOCKER_PATH")
+PATH_ACCESS = os.path.join(DOCKER_PATH , "csvFiles")
 
 
 

@@ -38,9 +38,12 @@ from cleaningCollectedCsv import cleaningData
 # DATA_DIR = "/home/saifmk10/AGENT-DATA/Stock-Data/TEST/csvFiles"
 # REPORT_DIR = "/home/saifmk10/AGENT-DATA/Stock-Data/TEST/reports"
 
-#[NOTE] : THIS IS THE PATH USED FOR THE PRODUCTION CODE ONLY
-DATA_DIR = "/home/saifmk10/AGENT-DATA/Stock-Data/csvFiles"
-REPORT_DIR = "/home/saifmk10/AGENT-DATA/Stock-Data/reports"
+
+#[NOTE] : THIS IS THE PATH USED FOR THE PRODUCTION CODE ONLY AND ONLY FOR DOCKER
+DOCKER_PATH = os.environ.get("DOCKER_PATH")
+DATA_DIR = os.path.join(DOCKER_PATH , "csvFiles")
+REPORT_DIR = os.path.join(DOCKER_PATH , "reports")
+
 
 # function that makes sure the folders are created , as the folders are ignored my default 
 def init_storage():
