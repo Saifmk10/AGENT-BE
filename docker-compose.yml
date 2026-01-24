@@ -20,7 +20,7 @@ services:
       DOCKER_PATH: /app/Data_collection_automation/Analysed_Files_data
     volumes:
       - /home/saifmk10/AGENT-DATA/Stock-Data:/app/Data_collection_automation/Analysed_Files_data
-    command: python run.py
+    command: python -m run
 
 
 
