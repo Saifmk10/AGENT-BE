@@ -2,9 +2,10 @@
 #in this module we cal the fn that is responsible for converting the csv into a useful html that will later be sned to the user
 
 import yagmail
-import collectedDataAnalysis
+import Stock_analysis_modules.collectedDataAnalysis as collectedDataAnalysis
+from Backend_to_user_sender.mail_parser.mailParserModule import mailParser
 import os
-from cleaningCollectedCsv import cleaningData
+from Csv_path_cleaner.cleaningCollectedCsv import cleaningData
 
 # USE this for local testing only , if tested locally change it to the test dir
 # REPORT_DIR =  "/home/saifmk10/AGENT-DATA/Stock-Data/reports"
@@ -15,7 +16,7 @@ REPORT_DIR = os.path.join(DOCKER_PATH , "reports")
 def main():
 
     # calling the function that makes sure all the data is parsed into a html format and ready to be send as mail
-    collectedDataAnalysis.mailParser()
+    mailParser()
 
     # all the gamil requirements needed to send the mail to all the listed users
     yag = yagmail.SMTP('saifmohasaif216@gmail.com' , 'lefw fwqi eqnp lvvb') 
