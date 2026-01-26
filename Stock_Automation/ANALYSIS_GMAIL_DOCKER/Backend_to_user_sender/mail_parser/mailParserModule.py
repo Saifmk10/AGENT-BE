@@ -1,3 +1,11 @@
+# mail parser plays the role of only sending the mail to an user 
+
+# tasks executed by this module:
+# 1.  recives the processed data in the form of a dict 
+# 2.  uses the ollama model to conver that into user understandable form 
+# 3.  Once that has been completed then the data is put into a html 
+# 4.  Later the whole fucntion is called in the gmailSubscription.py file 
+
 from datetime import datetime
 import os
 import time
@@ -129,11 +137,13 @@ def mailParser():
 
         # cleaningData()
 
+    end = time.perf_counter()
+    print("TIME TAKEN --->" , end - start)
+    
     return report
 
 
-    end = time.perf_counter()
-    print("TIME TAKEN --->" , end - start)
+    
 
 final = mailParser()
 print(final)

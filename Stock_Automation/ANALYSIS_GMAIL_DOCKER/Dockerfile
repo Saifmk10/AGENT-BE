@@ -10,5 +10,5 @@ COPY . .
 
 ENV PYTHONUNBUFFERED=1
 
-CMD ["python" , "gmailSubscription.py"]
+CMD ["python" , "runMessage.py"]
 

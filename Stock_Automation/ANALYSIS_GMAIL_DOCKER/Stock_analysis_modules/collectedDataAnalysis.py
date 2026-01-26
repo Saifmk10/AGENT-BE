@@ -14,14 +14,16 @@ import requests
 
 
 #[NOTE] : THIS IS THE PATH USED FOR THE LOCAL TESTING ONLY
-# DATA_DIR = "/home/saifmk10/AGENT-DATA/Stock-Data/TEST/csvFiles"
-# REPORT_DIR = "/home/saifmk10/AGENT-DATA/Stock-Data/TEST/reports"
+DATA_DIR = "/home/saifmk10/AGENT-SERVICES/AGENT-BE/test/csvFiles"
+REPORT_DIR = "/home/saifmk10/AGENT-SERVICES/AGENT-BE/test/reports"
+
+# /home/saifmk10/AGENT-SERVICES/AGENT-BE/Stock_Automation/DATA_COLLECTION_DOCKER
 
 
 #[NOTE] : THIS IS THE PATH USED FOR THE PRODUCTION CODE ONLY AND ONLY FOR DOCKER
 DOCKER_PATH = os.environ.get("DOCKER_PATH")
-DATA_DIR = os.path.join(DOCKER_PATH , "csvFiles")
-REPORT_DIR = os.path.join(DOCKER_PATH , "reports")
+# DATA_DIR = os.path.join(DOCKER_PATH , "csvFiles")
+# REPORT_DIR = os.path.join(DOCKER_PATH , "reports")
 
 
 # function that makes sure the folders are created , as the folders are ignored my default 
@@ -220,7 +222,7 @@ def usersAndStocksMap():
 
 
 
-
+# this function is used to fetch the csv so it can be passed into the panda for analysis
 def fetchCollectedData():
 
     usersAndStocks = {}
@@ -249,27 +251,21 @@ def fetchCollectedData():
                     # this is done so that each user will get 1 api call for all the stocks reducing cost.
                     # adding the snapshot alone into the ai is enought but then ive added the stock name too , just incase
                     analyzedData[singleUser].append({
-                        "stocks" : stocks,
+                        "stocks" : stocks.split(".")[0],
                         "analysis" : snapshot, 
                     })
 
-                    return analyzedData
+                    
 
                 except Exception as error:
                     print("error in dict in collectedDataAnalysis.py:" , error)
-
+           
         except Exception as error:
             print("Error from collectedDataAnalysis.py" , error)
 
-
-data = fetchCollectedData()
-print(data)
+    return analyzedData
+# data = fetchCollectedData()
+# print(data)
 
 # def dailyReport():
 #     pass
-
-
-# this is the main function where all the analysis and the ai parsing will come together and then will be put together into the html format that will be send via mail
-# the path for the analysisPanda function is being added within this function
-# [NOTE] : need to add the iteration where all the stocks csv will be added analyzed one after the other
-
