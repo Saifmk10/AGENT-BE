@@ -13,15 +13,24 @@ services:
 
 
   #analyzer compose used to run the data analysis and also the gmail subscription automation
-  analyzer:
+  # analyzer:
+  #   build: ./Stock_Automation/ANALYSIS_GMAIL_DOCKER
+  #   environment:
+  #     BASE_DIR: /app
+  #     DOCKER_PATH: /app/Data_collection_automation/Analysed_Files_data
+  #   volumes:
+  #     - /home/saifmk10/AGENT-DATA/Stock-Data:/app/Data_collection_automation/Analysed_Files_data
+  #   command: python -m run
+
+
+  daily-analysis :
     build: ./Stock_Automation/ANALYSIS_GMAIL_DOCKER
     environment:
       BASE_DIR: /app
       DOCKER_PATH: /app/Data_collection_automation/Analysed_Files_data
     volumes:
       - /home/saifmk10/AGENT-DATA/Stock-Data:/app/Data_collection_automation/Analysed_Files_data
-    command: python -m run
-
+    command: python -m runDailyAnalysis
 
   analyzer-message:
     build: ./Stock_Automation/ANALYSIS_GMAIL_DOCKER
@@ -50,14 +59,6 @@ services:
     ports:
       - "1555:1555"
 
-
-  # running the api tunnel for the cloudflare
-  cloudFlare:
-    image: cloudflare/cloudflared:latest
-    command: tunnel run 1ae72bb1-b91a-4352-95a8-d29f9ad4eb3b
-    volumes:
-      - /home/saifmk10/.cloudflared:/home/nonroot/.cloudflared
-    restart: unless-stopped
 
 
 
