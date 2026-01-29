@@ -27,7 +27,7 @@ def init_storage():
 
 if __name__ == "__main__":
     # import AFTER runtime starts
-    from fetchingStock import main
+    from Stock_price_fetching.fetchingStock import main
 
      # from Stock_Automation.ANALYSIS_GMAIL_DOCKER.collectedDataAnalysis import init_storage
     # from Stock_Automation.DATA_COLLECTION_DOCKER.fetchingStock import main

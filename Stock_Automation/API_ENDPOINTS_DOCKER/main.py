@@ -2,11 +2,11 @@
 # these end points will be make public with the help of cloudflare tunnel
 
 from fastapi import FastAPI
-from priceFetcher import stockPriceFetcher
-from searchedStock import SearchedStockPrice
-from stock_recommendation_endpoints.gainers import gainers
-from stock_recommendation_endpoints.looser import looser
-from stock_recommendation_endpoints.mostActive import mostActive
+from stock_endpoints.options.priceFetcher import stockPriceFetcher
+from stock_endpoints.options.searchedStock import SearchedStockPrice
+from stock_endpoints.trends.gainers import gainers
+from stock_endpoints.trends.looser import looser
+from stock_endpoints.trends.mostActive import mostActive
 
 app = FastAPI()
 
