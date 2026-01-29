@@ -1,10 +1,9 @@
 # mail parser plays the role of only sending the mail to an user 
 
 # tasks executed by this module:
-# 1.  recives the processed data in the form of a dict 
-# 2.  uses the ollama model to conver that into user understandable form 
-# 3.  Once that has been completed then the data is put into a html 
-# 4.  Later the whole fucntion is called in the gmailSubscription.py file 
+# 1.  recives the processed data in the form of a dict from the collectedDataAnalysis.py
+# 2.  the data is then added into a report folder that is in the json format , also the data will be added
+# 3.  all the stock data is added into the same json under the users email
 
 from datetime import datetime
 import os
@@ -13,17 +12,18 @@ import json , requests
 from Stock_analysis_modules.collectedDataAnalysis import ollamaResponse , fetchCollectedData
 # from dotenv import load_dotenv
 
+# [NOTE] docker path used for prod only
 DOCKER_PATH = os.environ.get("DOCKER_PATH")
 DATA_DIR = os.path.join(DOCKER_PATH , "csvFiles")
 REPORT_DIR = os.path.join(DOCKER_PATH , "reports")
 
 
-# used for testing 
+# [NOTE] used for testing 
 # DATA_DIR = "/home/saifmk10/AGENT-SERVICES/AGENT-BE/test/csvFiles"
 # REPORT_DIR = "/home/saifmk10/AGENT-SERVICES/AGENT-BE/test/reports"
 
 
-
+# function used to clean the dict data that was generate by the pandas into raw format so it can be added into the json
 def jsonFiltering(obj):
     if isinstance(obj, dict):
         return {k: jsonFiltering(v) for k, v in obj.items()}
@@ -68,7 +68,10 @@ def jsonFiltering(obj):
 
 
 
-
+# function used to add the data in json format 
+# 1.    access the data from the function for the collectedDataAnalysis.py
+# 2.    converts that data into proper raw data like int , string , float so it can be used by json
+# 3.    write the data into the report folder in the json format
 def mailParser():
     analyzedData = fetchCollectedData()
     # print(analyzedData)
@@ -99,9 +102,6 @@ def mailParser():
             cleaned_stock["date"] = Adddate
             file_data.append(cleaned_stock)
 
-            # print("------->", file_data)
-            # aiResponse = aiCheck(file_data)
-            # print("AI RESPONSE ---->" , aiResponse)
 
         try:
             with open(file_path, "w", encoding="utf-8") as file:
@@ -112,15 +112,8 @@ def mailParser():
         except OSError as error:
             print("FAILED TO ADD JSON WITH ERROR :" , error)
 
+
+# main fucntion is the entry point for this modlue , where the runDailyAnalysis.py runs this in the docker compose
 def main():
     print("RUNNING DAILY STOCK ANALYSIS ...")
     mailParser()
-
-
-
-# print("------------------->",data)
-# output = aiCheck()
-# print(output)
-# mailParser()
-
-# the function mailParser is being called within the gmailSubscription 

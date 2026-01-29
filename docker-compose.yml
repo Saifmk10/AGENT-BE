@@ -5,6 +5,7 @@ services:
     build: ./Stock_Automation/DATA_COLLECTION_DOCKER
     environment:
       BASE_DIR: /app
+      DOCKER_PATH: /app/Data_collection_automation/Analysed_Files_data
     volumes: # change the vol when needed , when the data need to be added into a specific location of the system
       - /home/saifmk10/AGENT-DATA/Stock-Data:/app/Data_collection_automation/Analysed_Files_data
     command: python run.py
