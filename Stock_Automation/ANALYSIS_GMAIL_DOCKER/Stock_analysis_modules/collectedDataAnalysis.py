@@ -14,16 +14,16 @@ import requests
 
 
 #[NOTE] : THIS IS THE PATH USED FOR THE LOCAL TESTING ONLY
-DATA_DIR = "/home/saifmk10/AGENT-SERVICES/AGENT-BE/test/csvFiles"
-REPORT_DIR = "/home/saifmk10/AGENT-SERVICES/AGENT-BE/test/reports"
+# DATA_DIR = "/home/saifmk10/AGENT-SERVICES/AGENT-BE/test/csvFiles"
+# REPORT_DIR = "/home/saifmk10/AGENT-SERVICES/AGENT-BE/test/reports"
 
 # /home/saifmk10/AGENT-SERVICES/AGENT-BE/Stock_Automation/DATA_COLLECTION_DOCKER
 
 
 #[NOTE] : THIS IS THE PATH USED FOR THE PRODUCTION CODE ONLY AND ONLY FOR DOCKER
-# DOCKER_PATH = os.environ.get("DOCKER_PATH")
-# DATA_DIR = os.path.join(DOCKER_PATH , "csvFiles")
-# REPORT_DIR = os.path.join(DOCKER_PATH , "reports")
+DOCKER_PATH = os.environ.get("DOCKER_PATH")
+DATA_DIR = os.path.join(DOCKER_PATH , "csvFiles")
+REPORT_DIR = os.path.join(DOCKER_PATH , "reports")
 
 
 # function that makes sure the folders are created , as the folders are ignored my default 
@@ -279,6 +279,8 @@ def fetchCollectedData():
             print("Error from collectedDataAnalysis.py" , error)
 
     return analyzedData
+
+
 data = fetchCollectedData()
 print(data)
 

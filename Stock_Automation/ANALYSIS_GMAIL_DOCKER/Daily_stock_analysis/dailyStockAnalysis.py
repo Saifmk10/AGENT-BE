@@ -6,10 +6,11 @@
 # 3.  all the stock data is added into the same json under the users email
 
 from datetime import datetime
+import time
 import os
 from datetime import date
 import json , requests
-from Stock_analysis_modules.collectedDataAnalysis import ollamaResponse , fetchCollectedData
+from Stock_analysis_modules.collectedDataAnalysis import  fetchCollectedData
 # from dotenv import load_dotenv
 
 # [NOTE] docker path used for prod only
@@ -21,6 +22,8 @@ REPORT_DIR = os.path.join(DOCKER_PATH , "reports")
 # [NOTE] used for testing 
 # DATA_DIR = "/home/saifmk10/AGENT-SERVICES/AGENT-BE/test/csvFiles"
 # REPORT_DIR = "/home/saifmk10/AGENT-SERVICES/AGENT-BE/test/reports"
+
+
 
 
 # function used to clean the dict data that was generate by the pandas into raw format so it can be added into the json
@@ -37,32 +40,33 @@ def jsonFiltering(obj):
 
 
 
-# def aiCheck(data):
-#     start = time.perf_counter()
-#     url = "http://localhost:11434/api/generate"
-#     payload = {
-#         "model": "phi3:mini",
-#         "prompt": f"""
-#                     {data}
+def aiSummary(data):
+    start = time.perf_counter()
+    url = "http://ollama:11434/api/generate"
+    payload = {
+        "model": "phi3:mini",
+        "prompt": f"""
+                    {data}
                     
-#                     Summarize the following stock-details JSON in under 100 words.
-#                     Highlight major stocks and important trends only.
-#                     No bullet points. No extra explanation.
-#                     Stop immediately once the limit is reached.
+                    Summarize the following stock-details JSON in under 100 words.
+                    Highlight major stocks and important trends only.
+                    No bullet points. No extra explanation.
+                    Stop immediately once the limit is reached.
+                    Keep the currency as rupees
     
 
-#                     """,
-#         "stream": False,
-#         "tokens" : False
-#     }
+                    """,
+        "stream": False,
+        "tokens" : False
+    }
 
-#     response = requests.post(url, json=payload)
-#     response.raise_for_status()  # crashes loudly if Ollama is unhappy
-#     end = time.perf_counter()
-#     totaltime = end - start
-#     # print("--------------->" , totaltime)
-#     print("--------------->", round(totaltime, 3), "seconds")
-#     return response.json()["response"]
+    response = requests.post(url, json=payload)
+    response.raise_for_status()  # crashes loudly if Ollama is unhappy
+    end = time.perf_counter()
+    totaltime = end - start
+    # print("--------------->" , totaltime)
+    print("--------------->", round(totaltime, 3), "seconds")
+    return response.json()["response"]
 
 
 
@@ -72,9 +76,10 @@ def jsonFiltering(obj):
 # 1.    access the data from the function for the collectedDataAnalysis.py
 # 2.    converts that data into proper raw data like int , string , float so it can be used by json
 # 3.    write the data into the report folder in the json format
-def mailParser():
+def JSONconvertor():
     analyzedData = fetchCollectedData()
     # print(analyzedData)
+    Adddate = date.today().strftime("%d-%m-%Y")
 
     for userEmail, usersData in analyzedData.items():
         
@@ -96,18 +101,26 @@ def mailParser():
 
         for data in usersData: 
 
-            Adddate = date.today().strftime("%d-%m-%Y")
+            
 
             cleaned_stock = jsonFiltering(data)
-            cleaned_stock["date"] = Adddate
+            # cleaned_stock["date"] = Adddate
             file_data.append(cleaned_stock)
 
+        summary = aiSummary(file_data)
+        dailyReport = {
+            "date" : Adddate,
+            "report" : file_data,
+            "summary" : summary
+        }
 
         try:
             with open(file_path, "w", encoding="utf-8") as file:
-                json.dump(file_data, file, indent=1)
+                json.dump(dailyReport, file, indent=1)
 
             print("DATA WAS ADDED AS JSON FORM SUCCESSFULLY...")
+            # return file_data
+            
 
         except OSError as error:
             print("FAILED TO ADD JSON WITH ERROR :" , error)
@@ -116,4 +129,4 @@ def mailParser():
 # main fucntion is the entry point for this modlue , where the runDailyAnalysis.py runs this in the docker compose
 def main():
     print("RUNNING DAILY STOCK ANALYSIS ...")
-    mailParser()
+    JSONconvertor()
