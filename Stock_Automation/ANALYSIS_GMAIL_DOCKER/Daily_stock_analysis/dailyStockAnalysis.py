@@ -11,6 +11,7 @@ import os
 from datetime import date
 import json , requests
 from Stock_analysis_modules.collectedDataAnalysis import  fetchCollectedData
+from Csv_path_cleaner.cleaningCollectedCsv import cleaningData
 # from dotenv import load_dotenv
 
 # [NOTE] docker path used for prod only
@@ -141,3 +142,9 @@ def JSONconvertor():
 def main():
     print("RUNNING DAILY STOCK ANALYSIS ...")
     JSONconvertor()
+    print("CLEANING DATA FROM THE FOLDER ...")
+
+    try :
+        cleaningData() # cleans the csv files so there is no pileup of old data
+    except Exception as error:
+        print("CLEANING FAILED ERROR :" , error)
