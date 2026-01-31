@@ -46,13 +46,18 @@ def aiSummary(data):
     payload = {
         "model": "phi3:mini",
         "prompt": f"""
-                    {data}
                     
-                    Summarize the following stock-details JSON in under 100 words.
-                    Highlight major stocks and important trends only.
-                    No bullet points. No extra explanation.
-                    Stop immediately once the limit is reached.
-                    Keep the currency as rupees
+                    
+                    Use OHLC and stats.
+                    Breakout: Close>Open and Close=High.
+                    Risk: std>1% of mean.
+                    Support=q25, Resistance=q75.
+                    Trend: Close≥q75 bullish, Close≤q25 bearish.
+                    Write a <100-word narrative in rupees.
+                    No lists or meta text.
+
+
+                    {data}
     
 
                     """,
@@ -78,52 +83,58 @@ def aiSummary(data):
 # 3.    write the data into the report folder in the json format
 def JSONconvertor():
     analyzedData = fetchCollectedData()
-    # print(analyzedData)
     Adddate = date.today().strftime("%d-%m-%Y")
 
     for userEmail, usersData in analyzedData.items():
-        
+
         user_dir = os.path.join(REPORT_DIR, userEmail)
         os.makedirs(user_dir, exist_ok=True)
 
         file_name = f"{userEmail}.json"
         file_path = os.path.join(user_dir, file_name)
-        
 
+        # loading the existing data into the code 
         if os.path.exists(file_path):
             try:
                 with open(file_path, "r", encoding="utf-8") as file:
-                    file_data = json.load(file)
+                    stored_json = json.load(file)
+                    history = stored_json.get("HISTORY", [])
             except json.JSONDecodeError:
-                file_data = []
+                history = []
         else:
-            file_data = []
+            history = []
 
-        for data in usersData: 
 
-            
 
-            cleaned_stock = jsonFiltering(data)
-            # cleaned_stock["date"] = Adddate
-            file_data.append(cleaned_stock)
-
-        summary = aiSummary(file_data)
-        dailyReport = {
-            "date" : Adddate,
-            "report" : file_data,
-            "summary" : summary
+        # main report dict
+        daily_report = {
+            "date": Adddate,
+            "report": [],
+            "summary": ""
         }
 
+
+
+        for data in usersData:
+            cleaned_stock = jsonFiltering(data)
+            daily_report["report"].append(cleaned_stock)
+
+        #  Generate summary for TODAY only
+        daily_report["summary"] = aiSummary(daily_report["report"])
+
+
+        # appending all the data into one dict
+        history.append(daily_report)
+
+        # writing the created data into the json file 
         try:
             with open(file_path, "w", encoding="utf-8") as file:
-                json.dump(dailyReport, file, indent=1)
+                json.dump({"HISTORY": history}, file, indent=2)
 
             print("DATA WAS ADDED AS JSON FORM SUCCESSFULLY...")
-            # return file_data
-            
 
         except OSError as error:
-            print("FAILED TO ADD JSON WITH ERROR :" , error)
+            print("FAILED TO ADD JSON WITH ERROR:", error)
 
 
 # main fucntion is the entry point for this modlue , where the runDailyAnalysis.py runs this in the docker compose

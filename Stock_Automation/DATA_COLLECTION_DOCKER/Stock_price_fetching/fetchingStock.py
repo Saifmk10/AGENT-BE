@@ -51,6 +51,7 @@ def priceFetcher(stockName):
             print("response : " , response.status_code)
             print(response.json())
             data = response.json()
+            response.raise_for_status()
 
 
             #here the current data and time will be added into the csv
@@ -97,10 +98,24 @@ def priceFetcher(stockName):
             time.sleep(300)  #[NOTE]change to 300 in prod =================<>=======================
 
         except KeyboardInterrupt:
-            raise
-        except Exception as e:
-            print("THREAD CRASHED WITH [ln 98]:", repr(e))
-            raise
+            # raise
+            print("KEYBOARD INTERRUPTION...") # only happens in the test , not in the container 
+
+        # except Exception as error:
+        #     print("THREAD CRASHED WITH [ln 98]:", repr(error))
+        #     # raise
+        except requests.exceptions.HTTPError as error :
+            if error.response.status_code in (404 , 403 , 429 ): # will re run the try block 
+                time.sleep(2)
+                continue
+            else:
+                print("FETCHING FAILED DUE TO HTTP CODE :" , error)
+                break
+            
+        except (requests.exceptions.ConnectionError, requests.exceptions.Timeout) as error:
+            print("NETWORK ERROR, RETRYING:", error)
+            time.sleep(2)
+            continue
 
 
 # main function is the runnnig function this is executed with the help of the run.py function, done to prevent the modules and folder conflicts
