@@ -38,7 +38,22 @@ def jsonFiltering(obj):
     return obj
 
 
+# Use OHLC and stats.
+#                     Breakout: Close>Open and Close=High.
+#                     Risk: std>1% of mean.
+#                     Support=q25, Resistance=q75.
+#                     Trend: Close≥q75 bullish, Close≤q25 bearish.
+#                     Write a <100-word narrative in rupees.
+#                     No lists or meta text.
 
+#                     Use OHLC and stats.
+#                     Check breakout, risk, trend, support, resistance internally.
+#                     Write a short EOD summary in plain English.
+#                     Max 70 words.
+#                     Use ₹.
+#                     No lists.
+#                     No meta text.
+#                     If nothing changed, say market is stable or neutral.
 
 
 def aiSummary(data):
@@ -48,15 +63,12 @@ def aiSummary(data):
         "model": "phi3:mini",
         "prompt": f"""
                     
-                    
-                    Use OHLC and stats.
-                    Breakout: Close>Open and Close=High.
-                    Risk: std>1% of mean.
-                    Support=q25, Resistance=q75.
-                    Trend: Close≥q75 bullish, Close≤q25 bearish.
-                    Write a <100-word narrative in rupees.
-                    No lists or meta text.
-
+                    Analyze OHLC and stats.
+                    Write a ≤50-word EOD stock summary in plain English.
+                    Use ₹.
+                    No lists.
+                    State price behavior, volatility/risk, trend, and support/resistance.
+                    If flat, say neutral or stable.
 
                     {data}
     
