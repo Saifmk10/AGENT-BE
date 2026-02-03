@@ -78,8 +78,12 @@ def fetchingUserAddedStock():
     for doc in documentSnapshot:
         data = doc.to_dict()
         # print(data["UserId"])
-        userId = data["UserId"]
-        userEmail = data["Email"]
+        # userId = data["UserId"]
+        userId = doc.id
+        
+        # userEmail = data["Email"]
+        userEmail = data.get("Email")
+        # print("FIXED BD ERROR --->",userId , userEmail)
 
         # this is the var which is responsible for fetching if the user has a subscribed to use the stock agent , if they have subscribed then the data will the collected
         CheckAvailabilityPath = (
