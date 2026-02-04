@@ -2,6 +2,7 @@
 # these end points will be make public with the help of cloudflare tunnel
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from stock_endpoints.options.priceFetcher import stockPriceFetcher
 from stock_endpoints.options.searchedStock import SearchedStockPrice
 from stock_endpoints.trends.gainers import gainers
@@ -9,6 +10,14 @@ from stock_endpoints.trends.looser import looser
 from stock_endpoints.trends.mostActive import mostActive
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=False,   # MUST be False with "*"
+    allow_methods=["GET", "OPTIONS"],
+    allow_headers=["*"],
+)
 
 # default api endpoint to test api status
 @app.get("/")
