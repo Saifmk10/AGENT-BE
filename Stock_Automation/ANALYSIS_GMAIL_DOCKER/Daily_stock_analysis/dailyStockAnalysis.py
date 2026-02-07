@@ -10,8 +10,11 @@ import time
 import os
 from datetime import date
 import json , requests
+import google.genai as genai
+from google.genai import types
 from Stock_analysis_modules.collectedDataAnalysis import  fetchCollectedData
 from Csv_path_cleaner.cleaningCollectedCsv import cleaningData
+from LLM_API_KEYS import gemini_api_key
 # from dotenv import load_dotenv
 
 # [NOTE] docker path used for prod only
@@ -56,35 +59,73 @@ def jsonFiltering(obj):
 #                     If nothing changed, say market is stable or neutral.
 
 
-def aiSummary(data):
-    start = time.perf_counter()
-    url = "http://ollama:11434/api/generate"
-    payload = {
-        "model": "phi3:mini",
-        "prompt": f"""
+# def aiSummary(data):
+#     start = time.perf_counter()
+#     url = "http://ollama:11434/api/generate"
+#     payload = {
+#         "model": "phi3:mini",
+#         "prompt": f"""
                     
-                    Analyze OHLC and stats.
-                    Write a ≤50-word EOD stock summary in plain English.
-                    Use ₹.
-                    No lists.
-                    State price behavior, volatility/risk, trend, and support/resistance.
-                    If flat, say neutral or stable.
+#                     Analyze OHLC and stats.
+#                     Write a ≤50-word EOD stock summary in plain English.
+#                     Use ₹.
+#                     No lists.
+#                     State price behavior, volatility/risk, trend, and support/resistance.
+#                     If flat, say neutral or stable.
 
-                    {data}
+#                     {data}
     
 
-                    """,
-        "stream": False,
-        "tokens" : False
-    }
+#                     """,
+#         "stream": False,
+#         "tokens" : False
+#     }
 
-    response = requests.post(url, json=payload)
-    response.raise_for_status()  # crashes loudly if Ollama is unhappy
+#     response = requests.post(url, json=payload)
+#     response.raise_for_status()  # crashes loudly if Ollama is unhappy
+#     end = time.perf_counter()
+#     totaltime = end - start
+#     # print("--------------->" , totaltime)
+#     print("--------------->", round(totaltime, 3), "seconds")
+#     return response.json()["response"]
+
+
+
+
+
+def aiSummary(data):
+    start = time.perf_counter()
+
+    # Client created inside function (testing style)
+    client = genai.Client(api_key=gemini_api_key)
+
+    prompt = f"Summarize this intraday JSON data: {data}"
+
+    response = client.models.generate_content(
+        model="gemini-3-flash-preview",
+        contents=prompt,
+        config=types.GenerateContentConfig(
+            system_instruction=(
+                "Act as a financial analyst. Summarize the provided intraday JSON "
+                "data for a beginner audience. Use a professional yet accessible tone. "
+                "Highlight momentum, closing price vs. highs, and volatility "
+                "(std/range) for each ticker. Limit to 100 words."
+            ),
+            thinking_config=types.ThinkingConfig(
+                thinking_level="MINIMAL"
+            )
+        )
+    )
+
+    if not response.text:
+        raise RuntimeError("Gemini returned empty response")
+
     end = time.perf_counter()
-    totaltime = end - start
-    # print("--------------->" , totaltime)
-    print("--------------->", round(totaltime, 3), "seconds")
-    return response.json()["response"]
+    print("--------------->", round(end - start, 3), "seconds")
+
+    return response.text.strip()
+
+
 
 
 

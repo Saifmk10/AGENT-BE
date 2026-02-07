@@ -19,3 +19,6 @@ stock-data
 
 # test folder containing all the code
 test
+
+#llm api keys
+LLM_API_KEYS.py
