@@ -14,7 +14,7 @@ DATA_DIR = os.path.join(DOCKER_PATH , "csvFiles")
 
 HEADER = ["EXTRACTED_DATE","EXTRACTED_TIME","STOCK_NAME","EXTRACTED_PRICE","STOCK_VOLUME","STOCK_AVG_VOLUME"] #header for the csv file
 
-fetchingDBData = fetchingUserAddedStock() # using the data that was fetched form the db
+fetchingDBData = fetchingUserAddedStock() # using the data that was fetched form the db , the stocks that has been added by users will be fetched here
 stock_to_emails = {}
 print("Stocks added and users list" , fetchingDBData)
 
@@ -47,12 +47,13 @@ def priceFetcher(stockName):
     while True :
         try :
             # api calling 
-            response = requests.get(url)
+            response = requests.get(url , timeout=10)
             print("response : " , response.status_code)
-            print(response.json())
-            data = response.json()
+            
             response.raise_for_status()
-
+            data = response.json()
+            print(data)
+            
 
             #here the current data and time will be added into the csv
             date = time.strftime("%d-%m-%Y", time.localtime())
@@ -101,9 +102,6 @@ def priceFetcher(stockName):
             # raise
             print("KEYBOARD INTERRUPTION...") # only happens in the test , not in the container 
 
-        # except Exception as error:
-        #     print("THREAD CRASHED WITH [ln 98]:", repr(error))
-        #     # raise
         except requests.exceptions.HTTPError as error :
             if error.response.status_code in (404 , 403 , 429 ): # will re run the try block 
                 time.sleep(2)
@@ -116,6 +114,9 @@ def priceFetcher(stockName):
             print("NETWORK ERROR, RETRYING:", error)
             time.sleep(2)
             continue
+        except Exception as error:
+            print("THREAD CRASHED WITH [ln 98]:", repr(error))
+            # raise
 
 
 # main function is the runnnig function this is executed with the help of the run.py function, done to prevent the modules and folder conflicts
