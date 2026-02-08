@@ -1,12 +1,18 @@
 import os
-from connection import db
+from Daily_stock_analysis.DbOperations.connection import db
 from firebase_admin import auth
 # from google.api_core import exceptions
 from  datetime import datetime
 import pytz
 
-DATA_DIR = "/home/saifmk10/AGENT-SERVICES/AGENT-BE/test/csvFiles"
-REPORT_DIR = "/home/saifmk10/AGENT-SERVICES/AGENT-BE/test/reports"
+# DATA_DIR = "/home/saifmk10/AGENT-SERVICES/AGENT-BE/test/csvFiles"
+# REPORT_DIR = "/home/saifmk10/AGENT-SERVICES/AGENT-BE/test/reports"
+
+# [NOTE] docker path used for prod only
+DOCKER_PATH = os.environ.get("DOCKER_PATH")
+DATA_DIR = os.path.join(DOCKER_PATH , "csvFiles")
+REPORT_DIR = os.path.join(DOCKER_PATH , "reports")
+
 
 ist = pytz.timezone("Asia/Kolkata")
 time = datetime.now(ist)
@@ -123,4 +129,3 @@ def updatingIntrDay ():
     
 
 # print(data)
-updatingIntrDay()

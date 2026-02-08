@@ -2,13 +2,14 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-COPY requirements.txt .
+ARG REQUIREMENT_FILE=requirements.txt
 
-RUN pip install --no-cache-dir -r requirements.txt
+COPY ${REQUIREMENT_FILE} /app/requirements.txt 
 
-COPY . . 
+RUN pip install --no-cache-dir -r /app/requirements.txt
+
+COPY . .
 
 ENV PYTHONUNBUFFERED=1
 
 CMD ["python"]
-

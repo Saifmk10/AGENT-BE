@@ -7,6 +7,7 @@
 
 from datetime import datetime
 import time
+from threading import Lock
 import os
 from datetime import date
 import json , requests
@@ -14,6 +15,7 @@ import google.genai as genai
 from google.genai import types
 from Stock_analysis_modules.collectedDataAnalysis import  fetchCollectedData
 from Csv_path_cleaner.cleaningCollectedCsv import cleaningData
+from Daily_stock_analysis.DbOperations.intraDayDataToDB import updatingIntrDay
 from LLM_API_KEYS import gemini_api_key
 # from dotenv import load_dotenv
 
@@ -41,89 +43,55 @@ def jsonFiltering(obj):
     return obj
 
 
-# Use OHLC and stats.
-#                     Breakout: Close>Open and Close=High.
-#                     Risk: std>1% of mean.
-#                     Support=q25, Resistance=q75.
-#                     Trend: Close≥q75 bullish, Close≤q25 bearish.
-#                     Write a <100-word narrative in rupees.
-#                     No lists or meta text.
-
-#                     Use OHLC and stats.
-#                     Check breakout, risk, trend, support, resistance internally.
-#                     Write a short EOD summary in plain English.
-#                     Max 70 words.
-#                     Use ₹.
-#                     No lists.
-#                     No meta text.
-#                     If nothing changed, say market is stable or neutral.
 
 
-# def aiSummary(data):
-#     start = time.perf_counter()
-#     url = "http://ollama:11434/api/generate"
-#     payload = {
-#         "model": "phi3:mini",
-#         "prompt": f"""
-                    
-#                     Analyze OHLC and stats.
-#                     Write a ≤50-word EOD stock summary in plain English.
-#                     Use ₹.
-#                     No lists.
-#                     State price behavior, volatility/risk, trend, and support/resistance.
-#                     If flat, say neutral or stable.
-
-#                     {data}
-    
-
-#                     """,
-#         "stream": False,
-#         "tokens" : False
-#     }
-
-#     response = requests.post(url, json=payload)
-#     response.raise_for_status()  # crashes loudly if Ollama is unhappy
-#     end = time.perf_counter()
-#     totaltime = end - start
-#     # print("--------------->" , totaltime)
-#     print("--------------->", round(totaltime, 3), "seconds")
-#     return response.json()["response"]
+LAST_GEMINI_CALL = 0
+GEMINI_LOCK = Lock()
+GEMINI_COOLDOWN = 2.5 
 
 
-
-
-
+# gemini ai summary , provides the summary for the current day data
+# gemini ai summary , provides the summary for the current day data
 def aiSummary(data):
+    global LAST_GEMINI_CALL
+
+    with GEMINI_LOCK:
+        now = time.time()
+        remaining = GEMINI_COOLDOWN - (now - LAST_GEMINI_CALL)
+        if remaining > 0:
+            time.sleep(remaining)
+        LAST_GEMINI_CALL = time.time()
+
     start = time.perf_counter()
 
-    # Client created inside function (testing style)
     client = genai.Client(api_key=gemini_api_key)
 
-    prompt = f"Summarize this intraday JSON data: {data}"
+    prompt = f"Analyze: {data}"
 
     response = client.models.generate_content(
-        model="gemini-3-flash-preview",
+        model="gemini-3-flash-preview",   # IMPORTANT: correct model
         contents=prompt,
         config=types.GenerateContentConfig(
             system_instruction=(
-                "Act as a financial analyst. Summarize the provided intraday JSON "
-                "data for a beginner audience. Use a professional yet accessible tone. "
-                "Highlight momentum, closing price vs. highs, and volatility "
-                "(std/range) for each ticker. Limit to 100 words."
+                "Analyze behavior from JSON. Rules: "
+                "Bias: Close>Open? Bullish: Bearish. "
+                "Pattern: Close==High? Breakout: Consolidation. "
+                "Risk: std>1%mean? High: Low. "
+                "Output: Narrative on buyer/seller positioning. "
+                "NO numbers/indicators/advice. <80 words total."
             ),
-            thinking_config=types.ThinkingConfig(
-                thinking_level="MINIMAL"
-            )
+            temperature=0.1,
         )
     )
 
-    if not response.text:
-        raise RuntimeError("Gemini returned empty response")
+    # safer response handling
+    text = getattr(response, "text", None)
+    if not text:
+        raise RuntimeError("Empty response from Gemini")
 
-    end = time.perf_counter()
-    print("--------------->", round(end - start, 3), "seconds")
+    print(f"Gemini time: {round(time.perf_counter() - start, 3)}s")
+    return text.strip()
 
-    return response.text.strip()
 
 
 
@@ -174,7 +142,8 @@ def JSONconvertor():
             daily_report["report"].append(cleaned_stock)
 
         #  Generate summary for TODAY only
-        daily_report["summary"] = aiSummary(daily_report["report"])
+        # try:
+            daily_report["summary"] = aiSummary(daily_report["report"])
 
 
         # appending all the data into one dict
@@ -191,6 +160,10 @@ def JSONconvertor():
             print("FAILED TO ADD JSON WITH ERROR:", error)
 
 
+
+
+
+
 # main fucntion is the entry point for this modlue , where the runDailyAnalysis.py runs this in the docker compose
 def main():
     print("RUNNING DAILY STOCK ANALYSIS ...")
@@ -201,3 +174,8 @@ def main():
         cleaningData() # cleans the csv files so there is no pileup of old data
     except Exception as error:
         print("CLEANING FAILED ERROR :" , error)
+
+    try: 
+        updatingIntrDay()
+    except Exception as error:
+        print("FAILED TO WRITE DATA INTO DB :" , error)
