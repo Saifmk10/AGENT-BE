@@ -6,7 +6,7 @@
 
 import yagmail
 import Stock_analysis_modules.collectedDataAnalysis as collectedDataAnalysis
-from Backend_to_user_sender.mail_parser.mailParserModule import mailParser
+from subscriptions.mail_parser.mailParserModule import mailParser
 import os
 from Csv_path_cleaner.cleaningCollectedCsv import cleaningData
 

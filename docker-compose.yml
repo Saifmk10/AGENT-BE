@@ -25,13 +25,18 @@ services:
 
 
   daily-analysis :
-    build: ./Stock_Automation/ANALYSIS_GMAIL_DOCKER
+    build: 
+      context: ./Stock_Automation/ANALYSIS_GMAIL_DOCKER
+      args:
+        REQUIREMENT_FILE: REQUIREMENTS/daily-analysis.txt
     environment:
       BASE_DIR: /app
       DOCKER_PATH: /app/Data_collection_automation/Analysed_Files_data
     volumes:
       - /home/saifmk10/AGENT-DATA/Stock-Data:/app/Data_collection_automation/Analysed_Files_data
     command: python -m runDailyAnalysis
+
+
 
   analyzer-message:
     build: ./Stock_Automation/ANALYSIS_GMAIL_DOCKER
