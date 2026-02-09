@@ -44,13 +44,13 @@ def jsonFiltering(obj):
 
 
 
-
+# gemini realatred vars for the cooldown period
 LAST_GEMINI_CALL = 0
 GEMINI_LOCK = Lock()
 GEMINI_COOLDOWN = 2.5 
 
 
-# gemini ai summary , provides the summary for the current day data
+
 # gemini ai summary , provides the summary for the current day data
 def aiSummary(data):
     global LAST_GEMINI_CALL
@@ -68,29 +68,36 @@ def aiSummary(data):
 
     prompt = f"Analyze: {data}"
 
-    response = client.models.generate_content(
-        model="gemini-3-flash-preview",   # IMPORTANT: correct model
-        contents=prompt,
-        config=types.GenerateContentConfig(
-            system_instruction=(
-                "Analyze behavior from JSON. Rules: "
-                "Bias: Close>Open? Bullish: Bearish. "
-                "Pattern: Close==High? Breakout: Consolidation. "
-                "Risk: std>1%mean? High: Low. "
-                "Output: Narrative on buyer/seller positioning. "
-                "NO numbers/indicators/advice. <80 words total."
-            ),
-            temperature=0.1,
+    try : 
+        response = client.models.generate_content(
+            model="gemini-3-flash-preview",
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                system_instruction=(
+                    "Analyze behavior from JSON. Rules: "
+                    "Bias: Close>Open? Bullish: Bearish. "
+                    "Pattern: Close==High? Breakout: Consolidation. "
+                    "Risk: std>1%mean? High: Low. "
+                    "Output: Narrative on buyer/seller positioning. "
+                    "NO numbers/indicators/advice. <80 words total."
+                ),
+                temperature=0.1,
+            )
         )
-    )
 
-    # safer response handling
-    text = getattr(response, "text", None)
-    if not text:
-        raise RuntimeError("Empty response from Gemini")
 
-    print(f"Gemini time: {round(time.perf_counter() - start, 3)}s")
-    return text.strip()
+        text = getattr(response, "text", None)
+        if not text:
+            raise RuntimeError("Empty response from Gemini")
+
+        print(f"Gemini time: {round(time.perf_counter() - start, 3)}s")
+        print(f"Input Tokens: {response.usage_metadata.prompt_token_count}")
+        print(f"Output Tokens: {response.usage_metadata.candidates_token_count}")
+        print(f"Total Tokens: {response.usage_metadata.total_token_count}")
+        return text.strip()
+    
+    except Exception as error:
+        print("ERROR IN GEMINI RESPONSE :" , error)
 
 
 
@@ -170,10 +177,10 @@ def main():
     JSONconvertor()
     print("CLEANING DATA FROM THE FOLDER ...")
 
-    try :
-        cleaningData() # cleans the csv files so there is no pileup of old data
-    except Exception as error:
-        print("CLEANING FAILED ERROR :" , error)
+    # try :
+    #     cleaningData() # cleans the csv files so there is no pileup of old data
+    # except Exception as error:
+    #     print("CLEANING FAILED ERROR :" , error)
 
     try: 
         updatingIntrDay()

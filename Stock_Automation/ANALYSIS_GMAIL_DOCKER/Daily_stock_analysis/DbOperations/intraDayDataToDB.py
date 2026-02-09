@@ -1,22 +1,24 @@
 import os
-from Daily_stock_analysis.DbOperations.connection import db
+from connection import db
 from firebase_admin import auth
 # from google.api_core import exceptions
 from  datetime import datetime
 import pytz
+import json
 
-# DATA_DIR = "/home/saifmk10/AGENT-SERVICES/AGENT-BE/test/csvFiles"
-# REPORT_DIR = "/home/saifmk10/AGENT-SERVICES/AGENT-BE/test/reports"
+DATA_DIR = "/home/saifmk10/AGENT-SERVICES/AGENT-BE/test/csvFiles"
+REPORT_DIR = "/home/saifmk10/AGENT-SERVICES/AGENT-BE/test/reports"
 
 # [NOTE] docker path used for prod only
-DOCKER_PATH = os.environ.get("DOCKER_PATH")
-DATA_DIR = os.path.join(DOCKER_PATH , "csvFiles")
-REPORT_DIR = os.path.join(DOCKER_PATH , "reports")
+# DOCKER_PATH = os.environ.get("DOCKER_PATH")
+# DATA_DIR = os.path.join(DOCKER_PATH , "csvFiles")
+# REPORT_DIR = os.path.join(DOCKER_PATH , "reports")
 
 
 ist = pytz.timezone("Asia/Kolkata")
 time = datetime.now(ist)
-currentTime = time.strftime("%Y-%m-%d %H:%M:%S")
+currentTime = time.strftime("%H:%M:%S")
+todaysDate = time.strftime("%d-%m-%Y")
 
 def fetchingUserAddedStock():
 
@@ -96,6 +98,22 @@ def updatingIntrDay ():
                     try :
                         with open(userDataPath , "r" , encoding="utf-8") as fileContent : 
                             content = fileContent.read()
+                            jsonFormat = json.loads(content)
+
+
+                        for day in jsonFormat["HISTORY"]:
+                            if day["date"] == todaysDate:
+                                dataForDate = day
+                                print("UPDATED USER DATA WITH DATE " , dataForDate)
+                                break
+
+                        # data = dataForDate["report"]
+                        data = {
+                            "date": dataForDate["date"],
+                            "report": dataForDate["report"],
+                            "summary": dataForDate["summary"]
+                        }
+                    
                     except (FileNotFoundError, PermissionError, IsADirectoryError, UnicodeDecodeError, OSError):
                         print("ERROR READING DATA FROM FILES IN datatoDatabase.py , [ERROR]:" , error)
 
@@ -107,11 +125,11 @@ def updatingIntrDay ():
                     print("UID --->" , userCred.uid)
 
                     try:
-                        ref = (db.collection("Users").document(uid).collection("Agents").document("Finance").collection("Stock_Data").document("IntraDay").collection("Data").document(currentTime))
+                        ref = (db.collection("Users").document(uid).collection("Agents").document("Finance").collection("Stock_Data").document("IntraDay").collection("Data").document(todaysDate))
 
                         ref.set({
                             "last_added" : currentTime, 
-                            "DATA" : content
+                            "DATA" : data
                         })
 
                         print("---> DATA ADDED INTO UID : " , uid)
@@ -129,3 +147,4 @@ def updatingIntrDay ():
     
 
 # print(data)
+updatingIntrDay()
