@@ -1,0 +1,6 @@
+{
+  "build": {
+    "builder": "dockerfile",
+    "context": "./Stock_Automation/API_ENDPOINTS_DOCKER"
+  }
+}

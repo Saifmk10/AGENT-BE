@@ -1,0 +1,7 @@
+__pycache__
+.git
+.env.local
+.DS_Store
+node_modules
+*.pyc
+.pytest_cache

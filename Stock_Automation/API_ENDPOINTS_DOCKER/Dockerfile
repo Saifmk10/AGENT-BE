@@ -10,4 +10,5 @@ RUN pip install -r requirements.txt
 
 COPY . .
 
-CMD ["uvicorn" , "main:app" , "--host" , "0.0.0.0" , "--port" , "1555"]
+# Use PORT env variable if set (Railway will set this), otherwise default to 1555 (local)
+CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT:-1555}"]
