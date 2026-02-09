@@ -9,7 +9,8 @@ from concurrent.futures import ThreadPoolExecutor
 from Data_fetching_from_db.fetching_tokenization import fetchingUserAddedStock
 
 # DATA_DIR = "/home/saifmk10/AGENT-DATA/Stock-Data/TEST/csvFiles"
-DOCKER_PATH = os.environ.get("DOCKER_PATH")
+# DOCKER_PATH = os.environ.get("DOCKER_PATH")
+DOCKER_PATH =  "/app/Data_collection_automation/Analysed_Files_data"
 DATA_DIR = os.path.join(DOCKER_PATH , "csvFiles")
 
 HEADER = ["EXTRACTED_DATE","EXTRACTED_TIME","STOCK_NAME","EXTRACTED_PRICE","STOCK_VOLUME","STOCK_AVG_VOLUME"] #header for the csv file
