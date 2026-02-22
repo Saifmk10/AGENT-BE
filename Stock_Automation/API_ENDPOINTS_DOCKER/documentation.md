@@ -18,12 +18,12 @@ WHAT ARE THE API ENDPOINTS??
 
 | Docker Image Name | Environment | Endpoint | Usage|
 |----------|-------------|----------|---------------|
-| stock-api-endpoints | Public | https://stock-api.saifmk.website/stock/{stockname} | used in data collection for analysis|
+| stock-api-endpoints | Public | https://stock-api.saifmk.online/stock/{stockname} | used in data collection for analysis|
 | stock-api-endpoints | Local | http://localhost:1555/stock/{stockname} | use the same port to access the api locally|
-| stock-api-endpoints | Public | https://stock-api.saifmk.website/search/{stockname} | enpoint to search and NSE stock|
-| stock-api-endpoints | Public | https://stock-api.saifmk.website/looser | retrns all the looser stocks of current day|
-| stock-api-endpoints | Public | https://stock-api.saifmk.website/gainer | retrns all the gainer stocks of current day|
-| stock-api-endpoints | Public | https://stock-api.saifmk.website/mostActive |retrns all the active stocks of current day|
+| stock-api-endpoints | Public | https://stock-api.saifmk.online/search/{stockname} | enpoint to search and NSE stock|
+| stock-api-endpoints | Public | https://stock-api.saifmk.online/looser | retrns all the looser stocks of current day|
+| stock-api-endpoints | Public | https://stock-api.saifmk.online/gainer | retrns all the gainer stocks of current day|
+| stock-api-endpoints | Public | https://stock-api.saifmk.online/mostActive |retrns all the active stocks of current day|
 
 
 ### [NOTE] : Use the local end point inorder to run the api locally or any failure in the cloudfalred endpoint , local endpoint will always be active
