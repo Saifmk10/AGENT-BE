@@ -55,3 +55,7 @@ def get_looser():
 
 def get_mostActive():
     return mostActive()
+
+
+
+# to run the application manually use [uvicorn main:app --reload]

@@ -30,36 +30,68 @@ def stockPriceFetcher(stockName):
     try:
         parsedInfo = BeautifulSoup(response.text, "html.parser")
 
-        # tags used to point to the specific 
+        # existing
         priceTag = parsedInfo.find("span", {"data-testid": "qsp-price"})
-        volumeTag = volumeTag = parsedInfo.find( "fin-streamer", {"data-field": "regularMarketVolume"})
-        avgVolumeTag = parsedInfo.find("fin-streamer" ,  {"data-field": "averageVolume"})
+        volumeTag = parsedInfo.find("fin-streamer", {"data-field": "regularMarketVolume"})
+        avgVolumeTag = parsedInfo.find("fin-streamer", {"data-field": "averageVolume"})
+        previousClosing = parsedInfo.find("fin-streamer", {"data-field": "regularMarketPreviousClose"})
+
+        # new fields
+        openTag = parsedInfo.find("fin-streamer", {"data-field": "regularMarketOpen"})
+        dayRangeTag = parsedInfo.find("fin-streamer", {"data-field": "regularMarketDayRange"})
+        week52Tag = parsedInfo.find("fin-streamer", {"data-field": "fiftyTwoWeekRange"})
+        marketCapTag = parsedInfo.find("fin-streamer", {"data-field": "marketCap"})
+        peRatioTag = parsedInfo.find("fin-streamer", {"data-field": "trailingPE"})
+        targetPriceTag = parsedInfo.find("fin-streamer", {"data-field": "targetMeanPrice"})
+
+        # bid / ask
+        bidLabel = parsedInfo.find("span", {"title": "Bid"})
+        askLabel = parsedInfo.find("span", {"title": "Ask"})
+
+        bidTag = bidLabel.find_next("span", class_="value") if bidLabel else None
+        askTag = askLabel.find_next("span", class_="value") if askLabel else None
+
 
         if priceTag is None:
             return {
                 "stockName": stockName,
                 "stockPrice": "Error: price element not found"
             }
-        
-        # checking if null 
+
+        # conversions
         currentPrice = float(priceTag.text.replace(",", "").strip())
 
-        currentVolume = (
-            float(volumeTag.text.replace(",", "").strip())
-            if volumeTag else None
-        )
+        currentVolume = float(volumeTag.text.replace(",", "").strip()) if volumeTag else None
+        avgVolume = float(avgVolumeTag.text.replace(",", "").strip()) if avgVolumeTag else None
+        previousClose = float(previousClosing.text.replace(",", "").strip()) if previousClosing else None
 
-        avgVolume = (
-            float(avgVolumeTag.text.replace(",", "").strip())
-            if avgVolumeTag else None
-        )
+        openPrice = float(openTag.text.replace(",", "").strip()) if openTag else None
+
+        dayRange = dayRangeTag.text.strip() if dayRangeTag else None
+        week52Range = week52Tag.text.strip() if week52Tag else None
+
+        marketCap = marketCapTag.text.strip() if marketCapTag else None
+        peRatio = float(peRatioTag.text.strip()) if peRatioTag else None
+        targetPrice = float(targetPriceTag.text.strip()) if targetPriceTag else None
+
+        bidValue = None if (not bidTag or bidTag.text.strip() in ["--", "-"]) else float(bidTag.text.strip())
+        askValue = None if (not askTag or askTag.text.strip() in ["--", "-"]) else float(askTag.text.strip())
 
 
         return {
             "stockName": stockName,
             "stockPrice": currentPrice,
             "stockVolume": currentVolume,
-            "stockAvgVolume": avgVolume
+            "stockAvgVolume": avgVolume,
+            "stockPreviousClosing": previousClose,
+            "stockOpen": openPrice,
+            "stockDayRange": dayRange,
+            "stock52WeekRange": week52Range,
+            "stockMarketCap": marketCap,
+            "stockPERatio": peRatio,
+            "stockTargetPrice": targetPrice,
+            "stockBid": bidValue,
+            "stockAsk": askValue
         }
 
     except Exception as error:
@@ -71,5 +103,5 @@ def stockPriceFetcher(stockName):
 # statement = True
 
 # while statement: 
-#     data = stockPriceFetcher("ASHOKLEY")
-#     print(data)
+data = stockPriceFetcher("ASHOKLEY")
+print(data)
