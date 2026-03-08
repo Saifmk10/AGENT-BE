@@ -68,9 +68,17 @@ def stockPriceFetcher(stockName):
         openPrice = float(openTag.text.replace(",", "").strip()) if openTag else None
 
         dayRange = dayRangeTag.text.strip() if dayRangeTag else None
-        week52Range = week52Tag.text.strip() if week52Tag else None
+        dayRangeOpening = float(dayRange.split(" - ")[0]) if dayRange else None
+        dayRangeClosing = float(dayRange.split(" - ")[1]) if dayRange else None
 
-        marketCap = marketCapTag.text.strip() if marketCapTag else None
+
+        week52Range = week52Tag.text.strip() if week52Tag else None
+        week52Opening = float(week52Range.split(" - ")[0]) if week52Range else None
+        week52Closing = float(week52Range.split(" - ")[1]) if week52Range else None
+
+
+
+        marketCap = str(marketCapTag.text.strip().replace(",", "")) if marketCapTag else None # was getting an alpahbets here , so using the strip
         peRatio = float(peRatioTag.text.strip()) if peRatioTag else None
         targetPrice = float(targetPriceTag.text.strip()) if targetPriceTag else None
 
@@ -85,8 +93,12 @@ def stockPriceFetcher(stockName):
             "stockAvgVolume": avgVolume,
             "stockPreviousClosing": previousClose,
             "stockOpen": openPrice,
-            "stockDayRange": dayRange,
-            "stock52WeekRange": week52Range,
+            # "stockDayRange": dayRange,
+            "stockDayRangeOpening": dayRangeOpening,
+            "stockDayRangeClosing": dayRangeClosing,
+            # "stock52WeekRange": week52Range,
+            "stock52WeekRangeOpening": week52Opening,
+            "stock52WeekRangeClosing": week52Closing,
             "stockMarketCap": marketCap,
             "stockPERatio": peRatio,
             "stockTargetPrice": targetPrice,
@@ -102,6 +114,6 @@ def stockPriceFetcher(stockName):
 
 # statement = True
 
-# while statement: 
-data = stockPriceFetcher("ASHOKLEY")
-print(data)
+
+# data = stockPriceFetcher("ASHOKLEY")
+# print(data)

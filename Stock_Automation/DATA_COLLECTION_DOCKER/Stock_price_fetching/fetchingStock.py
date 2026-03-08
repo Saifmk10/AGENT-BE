@@ -13,7 +13,7 @@ from Data_fetching_from_db.fetching_tokenization import fetchingUserAddedStock
 DOCKER_PATH =  "/app/Data_collection_automation/Analysed_Files_data"
 DATA_DIR = os.path.join(DOCKER_PATH , "csvFiles")
 
-HEADER = ["EXTRACTED_DATE","EXTRACTED_TIME","STOCK_NAME","EXTRACTED_PRICE","STOCK_VOLUME","STOCK_AVG_VOLUME"] #header for the csv file
+HEADER = [ "EXTRACTED_DATE", "EXTRACTED_TIME", "STOCK_NAME", "EXTRACTED_PRICE", "STOCK_VOLUME", "STOCK_AVG_VOLUME", "STOCK_PREVIOUS_CLOSE", "STOCK_OPEN", "STOCK_DAY_RANGE", "STOCK_52_WEEK_RANGE", "STOCK_MARKET_CAP", "STOCK_PE_RATIO", "STOCK_TARGET_PRICE", "STOCK_BID", "STOCK_ASK" ] #header for the csv file
 
 fetchingDBData = fetchingUserAddedStock() # using the data that was fetched form the db , the stocks that has been added by users will be fetched here
 stock_to_emails = {}
@@ -31,7 +31,7 @@ for user in fetchingDBData:
 def priceFetcher(stockName):
 
     # url = f"https://the-chat-app-api-git-main-saifmks-projects.vercel.app/api/searchedapi.py?symbol={stockName}"
-    url = f"https://stock-api.saifmk.website/stock/{stockName}"
+    url = f"https://stock-api.saifmk.online/stock/{stockName}"
     
     
     # setting the path for adding the csv into (remains the same for the vm)
@@ -66,6 +66,18 @@ def priceFetcher(stockName):
             price = float(data["stockPrice"])
             volume = float(data["stockVolume"])
             avg_vol = float(data["stockAvgVolume"])
+            previous_close = float(data["stockPreviousClosing"])
+            open_price = float(data["stockOpen"])
+            day_range_open = float(data["stockDayRangeOpening"])
+            day_range_close = float(data["stockDayRangeClosing"])
+            week_52_open = float(data["stock52WeekRangeOpening"])
+            week_52_close = float(data["stock52WeekRangeClosing"])
+            market_cap = data["stockMarketCap"]
+            pe_ratio = float(data["stockPERatio"])
+            target_price = float(data["stockTargetPrice"])
+            bid = data["stockBid"]
+            ask = data["stockAsk"]
+
             
 
 
@@ -95,7 +107,7 @@ def priceFetcher(stockName):
                     writer = csv.writer(f)
                     if not file_exists : 
                         writer.writerow(HEADER) # adding the header if the file doesnt exist
-                    writer.writerow([date,currentTime,name,price,volume,avg_vol]) #if file already exist this will start writing the row , will also come bellow the header
+                        writer.writerow([ date, currentTime, name, price, volume, avg_vol, previous_close, open_price, day_range_open, day_range_close, week_52_open, week_52_close, market_cap, pe_ratio, target_price, bid, ask]) #if file already exist this will start writing the row , will also come bellow the header
 
             time.sleep(300)  #[NOTE]change to 300 in prod =================<>=======================
 
@@ -116,7 +128,7 @@ def priceFetcher(stockName):
             time.sleep(2)
             continue
         except Exception as error:
-            print("THREAD CRASHED WITH [ln 98]:", repr(error))
+            print("THREAD CRASHED WITH :", repr(error))
             # raise
 
 
