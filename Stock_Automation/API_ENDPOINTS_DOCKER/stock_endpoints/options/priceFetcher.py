@@ -45,12 +45,8 @@ def stockPriceFetcher(stockName):
         targetPriceTag = parsedInfo.find("fin-streamer", {"data-field": "targetMeanPrice"})
 
         # bid / ask
-        bidLabel = parsedInfo.find("span", {"title": "Bid"})
-        askLabel = parsedInfo.find("span", {"title": "Ask"})
-
-        bidTag = bidLabel.find_next("span", class_="value") if bidLabel else None
-        askTag = askLabel.find_next("span", class_="value") if askLabel else None
-
+        bidTag = parsedInfo.find("fin-streamer", {"data-field": "bid"})
+        askTag = parsedInfo.find("fin-streamer", {"data-field": "ask"})
 
         if priceTag is None:
             return {
@@ -68,22 +64,30 @@ def stockPriceFetcher(stockName):
         openPrice = float(openTag.text.replace(",", "").strip()) if openTag else None
 
         dayRange = dayRangeTag.text.strip() if dayRangeTag else None
-        dayRangeOpening = float(dayRange.split(" - ")[0]) if dayRange else None
-        dayRangeClosing = float(dayRange.split(" - ")[1]) if dayRange else None
+        dayRangeOpening = float(dayRange.split(" - ")[0].replace(",", "")) if dayRange else None
+        dayRangeClosing = float(dayRange.split(" - ")[1].replace(",", "")) if dayRange else None
 
 
         week52Range = week52Tag.text.strip() if week52Tag else None
-        week52Opening = float(week52Range.split(" - ")[0]) if week52Range else None
-        week52Closing = float(week52Range.split(" - ")[1]) if week52Range else None
+        week52Opening = float(week52Range.split(" - ")[0].replace(",", "")) if week52Range else None
+        week52Closing = float(week52Range.split(" - ")[1].replace(",", "")) if week52Range else None
 
 
 
         marketCap = str(marketCapTag.text.strip().replace(",", "")) if marketCapTag else None # was getting an alpahbets here , so using the strip
-        peRatio = float(peRatioTag.text.strip()) if peRatioTag else None
-        targetPrice = float(targetPriceTag.text.strip()) if targetPriceTag else None
+        peRatio = float(peRatioTag.text.replace(",", "").strip()) if peRatioTag and peRatioTag.text.strip() not in ('N/A', '--', '-') else None
+        targetPrice = float(targetPriceTag.text.replace(",", "").strip()) if targetPriceTag and targetPriceTag.text.strip() not in ('N/A', '--', '-') else None
 
-        bidValue = None if (not bidTag or bidTag.text.strip() in ["--", "-"]) else float(bidTag.text.strip())
-        askValue = None if (not askTag or askTag.text.strip() in ["--", "-"]) else float(askTag.text.strip())
+        bidValue = None
+        if bidTag and 'x' in bidTag.text:
+            bid_price_str = bidTag.text.split('x')[0].strip().replace(',', '')
+            if bid_price_str not in ["--", "-"]:
+                bidValue = float(bid_price_str)
+        askValue = None
+        if askTag and 'x' in askTag.text:
+            ask_price_str = askTag.text.split('x')[0].strip().replace(',', '')
+            if ask_price_str not in ["--", "-"]:
+                askValue = float(ask_price_str)
 
 
         return {
