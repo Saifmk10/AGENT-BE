@@ -4,6 +4,8 @@
 
 import requests
 import time , csv
+from zoneinfo import ZoneInfo
+from datetime import datetime
 import os
 from concurrent.futures import ThreadPoolExecutor
 from Data_fetching_from_db.fetching_tokenization import fetchingUserAddedStock
@@ -13,8 +15,7 @@ from Data_fetching_from_db.fetching_tokenization import fetchingUserAddedStock
 DOCKER_PATH =  "/app/Data_collection_automation/Analysed_Files_data"
 DATA_DIR = os.path.join(DOCKER_PATH , "csvFiles")
 
-HEADER = [ "EXTRACTED_DATE", "EXTRACTED_TIME", "STOCK_NAME", "EXTRACTED_PRICE", "STOCK_VOLUME", "STOCK_AVG_VOLUME", "STOCK_PREVIOUS_CLOSE", "STOCK_OPEN", "STOCK_DAY_RANGE", "STOCK_52_WEEK_RANGE", "STOCK_MARKET_CAP", "STOCK_PE_RATIO", "STOCK_TARGET_PRICE", "STOCK_BID", "STOCK_ASK" ] #header for the csv file
-
+HEADER = HEADER = [ "EXTRACTED_DATE", "EXTRACTED_TIME", "STOCK_NAME", "EXTRACTED_PRICE", "STOCK_VOLUME", "STOCK_AVG_VOLUME", "STOCK_PREVIOUS_CLOSE", "STOCK_OPEN", "STOCK_DAY_RANGE_LOW", "STOCK_DAY_RANGE_HIGH", "STOCK_52_WEEK_LOW", "STOCK_52_WEEK_HIGH", "STOCK_MARKET_CAP", "STOCK_PE_RATIO", "STOCK_TARGET_PRICE", "STOCK_BID", "STOCK_ASK" ] # header for the csv file
 fetchingDBData = fetchingUserAddedStock() # using the data that was fetched form the db , the stocks that has been added by users will be fetched here
 stock_to_emails = {}
 print("Stocks added and users list" , fetchingDBData)
@@ -47,36 +48,47 @@ def priceFetcher(stockName):
 
     while True :
         try :
+            now = datetime.now(ZoneInfo("Asia/Kolkata"))
+            date = now.strftime("%d-%m-%Y")
+            currentTime = now.strftime("%H:%M:%S")
+
+
             # api calling 
             response = requests.get(url , timeout=10)
             print("response : " , response.status_code)
             
             response.raise_for_status()
             data = response.json()
-            print(data)
+            print("data fetched at :",currentTime, "DATA:", data)
+            
             
 
             #here the current data and time will be added into the csv
-            date = time.strftime("%d-%m-%Y", time.localtime())
-            currentTime = time.strftime("%H:%M:%S", time.localtime())
+            # date = time.strftime("%d-%m-%Y", time.localtime())
+            # currentTime = time.strftime("%H:%M:%S", time.localtime())
 
 
             # these collect the exact data that has been generated from the json repsonse and then added into the csv
-            name = data["stockName"]
-            price = float(data["stockPrice"])
-            volume = float(data["stockVolume"])
-            avg_vol = float(data["stockAvgVolume"])
-            previous_close = float(data["stockPreviousClosing"])
-            open_price = float(data["stockOpen"])
-            day_range_open = float(data["stockDayRangeOpening"])
-            day_range_close = float(data["stockDayRangeClosing"])
-            week_52_open = float(data["stock52WeekRangeOpening"])
-            week_52_close = float(data["stock52WeekRangeClosing"])
-            market_cap = data["stockMarketCap"]
-            pe_ratio = float(data["stockPERatio"])
-            target_price = float(data["stockTargetPrice"])
-            bid = data["stockBid"]
-            ask = data["stockAsk"]
+            name = data.get("stockName")
+
+            if isinstance(data.get("stockPrice"), str) and "Error" in data["stockPrice"]:
+                print(f"Skipping {name} due to API error: {data['stockPrice']}")
+                continue
+
+            price = float(data.get("stockPrice")) if data.get("stockPrice") is not None else 0.0
+            volume = float(data.get("stockVolume")) if data.get("stockVolume") is not None else 0.0
+            avg_vol = float(data.get("stockAvgVolume")) if data.get("stockAvgVolume") is not None else 0.0
+            previous_close = float(data.get("stockPreviousClosing")) if data.get("stockPreviousClosing") is not None else 0.0
+            open_price = float(data.get("stockOpen")) if data.get("stockOpen") is not None else 0.0
+            day_range_open = float(data.get("stockDayRangeOpening")) if data.get("stockDayRangeOpening") is not None else 0.0
+            day_range_close = float(data.get("stockDayRangeClosing")) if data.get("stockDayRangeClosing") is not None else 0.0
+            week_52_open = float(data.get("stock52WeekRangeOpening")) if data.get("stock52WeekRangeOpening") is not None else 0.0
+            week_52_close = float(data.get("stock52WeekRangeClosing")) if data.get("stock52WeekRangeClosing") is not None else 0.0
+            market_cap = data.get("stockMarketCap")
+            pe_ratio = float(data.get("stockPERatio")) if data.get("stockPERatio") is not None else 0.0
+            target_price = float(data.get("stockTargetPrice")) if data.get("stockTargetPrice") is not None else 0.0
+            bid = data.get("stockBid")
+            ask = data.get("stockAsk")
 
             
 
@@ -107,7 +119,7 @@ def priceFetcher(stockName):
                     writer = csv.writer(f)
                     if not file_exists : 
                         writer.writerow(HEADER) # adding the header if the file doesnt exist
-                        writer.writerow([ date, currentTime, name, price, volume, avg_vol, previous_close, open_price, day_range_open, day_range_close, week_52_open, week_52_close, market_cap, pe_ratio, target_price, bid, ask]) #if file already exist this will start writing the row , will also come bellow the header
+                    writer.writerow([ date, currentTime, name, price, volume, avg_vol, previous_close, open_price, day_range_open, day_range_close, week_52_open, week_52_close, market_cap, pe_ratio, target_price, bid, ask]) #if file already exist this will start writing the row , will also come bellow the header
 
             time.sleep(300)  #[NOTE]change to 300 in prod =================<>=======================
 
