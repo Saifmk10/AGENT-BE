@@ -15,7 +15,16 @@ from Data_fetching_from_db.fetching_tokenization import fetchingUserAddedStock
 DOCKER_PATH =  "/app/Data_collection_automation/Analysed_Files_data"
 DATA_DIR = os.path.join(DOCKER_PATH , "csvFiles")
 
-HEADER = HEADER = [ "EXTRACTED_DATE", "EXTRACTED_TIME", "STOCK_NAME", "EXTRACTED_PRICE", "STOCK_VOLUME", "STOCK_AVG_VOLUME", "STOCK_PREVIOUS_CLOSE", "STOCK_OPEN", "STOCK_DAY_RANGE_LOW", "STOCK_DAY_RANGE_HIGH", "STOCK_52_WEEK_LOW", "STOCK_52_WEEK_HIGH", "STOCK_MARKET_CAP", "STOCK_PE_RATIO", "STOCK_TARGET_PRICE", "STOCK_BID", "STOCK_ASK" ] # header for the csv file
+# header for the csv file
+HEADER = [ 
+    "EXTRACTED_DATE", "EXTRACTED_TIME", "STOCK_NAME", "EXTRACTED_PRICE", 
+    "STOCK_VOLUME", "STOCK_AVG_VOLUME", "STOCK_PREVIOUS_CLOSE", "STOCK_OPEN", 
+    "STOCK_DAY_RANGE_LOW", "STOCK_DAY_RANGE_HIGH", "STOCK_52_WEEK_LOW", 
+    "STOCK_52_WEEK_HIGH", "STOCK_MARKET_CAP", "STOCK_PE_RATIO", 
+    "STOCK_TARGET_PRICE", "STOCK_BID", "STOCK_ASK" 
+] 
+
+
 fetchingDBData = fetchingUserAddedStock() # using the data that was fetched form the db , the stocks that has been added by users will be fetched here
 stock_to_emails = {}
 print("Stocks added and users list" , fetchingDBData)
@@ -75,20 +84,23 @@ def priceFetcher(stockName):
                 print(f"Skipping {name} due to API error: {data['stockPrice']}")
                 continue
 
+
+
+            # fetching the data from the api , cleaning it to proper format to reduce any errors 
             price = float(data.get("stockPrice")) if data.get("stockPrice") is not None else 0.0
             volume = float(data.get("stockVolume")) if data.get("stockVolume") is not None else 0.0
             avg_vol = float(data.get("stockAvgVolume")) if data.get("stockAvgVolume") is not None else 0.0
-            previous_close = float(data.get("stockPreviousClosing")) if data.get("stockPreviousClosing") is not None else 0.0
+            prev_close = float(data.get("stockPreviousClosing")) if data.get("stockPreviousClosing") is not None else 0.0
             open_price = float(data.get("stockOpen")) if data.get("stockOpen") is not None else 0.0
-            day_range_open = float(data.get("stockDayRangeOpening")) if data.get("stockDayRangeOpening") is not None else 0.0
-            day_range_close = float(data.get("stockDayRangeClosing")) if data.get("stockDayRangeClosing") is not None else 0.0
-            week_52_open = float(data.get("stock52WeekRangeOpening")) if data.get("stock52WeekRangeOpening") is not None else 0.0
-            week_52_close = float(data.get("stock52WeekRangeClosing")) if data.get("stock52WeekRangeClosing") is not None else 0.0
-            market_cap = data.get("stockMarketCap")
+            day_low = float(data.get("stockDayRangeOpening")) if data.get("stockDayRangeOpening") is not None else 0.0
+            day_high = float(data.get("stockDayRangeClosing")) if data.get("stockDayRangeClosing") is not None else 0.0
+            week_52_low = float(data.get("stock52WeekRangeOpening")) if data.get("stock52WeekRangeOpening") is not None else 0.0
+            week_52_high = float(data.get("stock52WeekRangeClosing")) if data.get("stock52WeekRangeClosing") is not None else 0.0
+            market_cap = str(data.get("stockMarketCap")) if data.get("stockMarketCap") is not None else "0"
             pe_ratio = float(data.get("stockPERatio")) if data.get("stockPERatio") is not None else 0.0
             target_price = float(data.get("stockTargetPrice")) if data.get("stockTargetPrice") is not None else 0.0
-            bid = data.get("stockBid")
-            ask = data.get("stockAsk")
+            bid = float(data.get("stockBid")) if data.get("stockBid") is not None else 0.0
+            ask = float(data.get("stockAsk")) if data.get("stockAsk") is not None else 0.0
 
             
 
@@ -119,9 +131,19 @@ def priceFetcher(stockName):
                     writer = csv.writer(f)
                     if not file_exists : 
                         writer.writerow(HEADER) # adding the header if the file doesnt exist
-                    writer.writerow([ date, currentTime, name, price, volume, avg_vol, previous_close, open_price, day_range_open, day_range_close, week_52_open, week_52_close, market_cap, pe_ratio, target_price, bid, ask]) #if file already exist this will start writing the row , will also come bellow the header
+                    
+                    # writing the data into the dataset under the header
+                    writer.writerow([
+                        date, currentTime, name, price, 
+                        volume, avg_vol, prev_close, open_price, 
+                        day_low, day_high, week_52_low, 
+                        week_52_high, market_cap, pe_ratio, 
+                        target_price, bid, ask
+                    ]) #if file already exist this will start writing the row , will also come bellow the header
+
 
             time.sleep(300)  #[NOTE]change to 300 in prod =================<>=======================
+
 
         except KeyboardInterrupt:
             # raise
