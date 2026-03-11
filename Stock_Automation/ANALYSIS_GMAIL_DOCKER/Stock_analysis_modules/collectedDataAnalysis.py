@@ -43,7 +43,9 @@ def analysisPandas (path):
     OHLC_price = dataFrame["EXTRACTED_PRICE"]
 
 
+    # contains complete stat of intraday day , all related to the price only 
     stat_report = {
+        # price data 
         "count" : dataFrame["EXTRACTED_PRICE"].count(),
         "mean" : dataFrame["EXTRACTED_PRICE"].mean(),
         "median" : dataFrame["EXTRACTED_PRICE"].median(),
@@ -55,17 +57,40 @@ def analysisPandas (path):
         "q75" : dataFrame["EXTRACTED_PRICE"].quantile(0.75),
         "percentage" : round((dataFrame["EXTRACTED_PRICE"].max() - dataFrame["EXTRACTED_PRICE"].min()) / dataFrame["EXTRACTED_PRICE"].max() * 100 , 2) ,
         "range" : dataFrame["EXTRACTED_PRICE"].max() - dataFrame["EXTRACTED_PRICE"].min(),
+        
+        # volume data
+        "opening_vol" : dataFrame["STOCK_VOLUME"].min(),
+        "closing_vol" : dataFrame["STOCK_VOLUME"].max(), 
+        "average_vol" : dataFrame["STOCK_VOLUME"].mean(),
     }
 
+
+    # opening , highest , lowest , closing of intraday report
     ohlc_report = {
         "opening" : OHLC_price.iloc[0],
         "high" : OHLC_price.max(),
         "closing" : OHLC_price.iloc[-1],
         "low" : OHLC_price.min(),
     }
+
+
+    advanced_report = {
+    "stock_open": dataFrame["STOCK_OPEN"].iloc[0],         # Price at market start
+    "stock_current": dataFrame["EXTRACTED_PRICE"].iloc[-1],# Most recent price
+    "previous_close": dataFrame["STOCK_PREVIOUS_CLOSE"].iloc[0], # Yesterday's final price
+    "day_high": dataFrame["STOCK_DAY_RANGE_HIGH"].max(),   # The highest the stock went today
+    "day_low": dataFrame["STOCK_DAY_RANGE_LOW"].min(),     # The lowest the stock went today
+    "current_volume": dataFrame["STOCK_VOLUME"].iloc[-1],  # Total volume traded so far
+    "avg_volume": dataFrame["STOCK_AVG_VOLUME"].iloc[0],   # Normal daily volume
+    "target_price": dataFrame["STOCK_TARGET_PRICE"].iloc[0], # Analyst 1-year goal
+    "pe_ratio": dataFrame["STOCK_PE_RATIO"].iloc[0],         # Valuation ratio
+    "52w_high": dataFrame["STOCK_52_WEEK_HIGH"].max(),       # Yearly resistance level
+    "intraday_change_pct": ((dataFrame["EXTRACTED_PRICE"].iloc[-1] - dataFrame["STOCK_OPEN"].iloc[0]) / dataFrame["STOCK_OPEN"].iloc[0]) * 100,
+    "rvol": dataFrame["STOCK_VOLUME"].iloc[-1] / dataFrame["STOCK_AVG_VOLUME"].iloc[0]
+    }
     
 
-
+    # these vars are used for creating the signal_report , used to make accessing then easy
     O = ohlc_report["opening"]
     H = ohlc_report["high"]
     C = ohlc_report["closing"]
@@ -75,9 +100,61 @@ def analysisPandas (path):
     MED = stat_report["median"]
     Q1 = stat_report["q25"]
     Q3 = stat_report["q75"]
+    # OV = stat_report["opening_vol"]
+    # CV = stat_report["closing_vol"]
+    # AV = stat_report["average_vol"]
+    #tagetestimate 
+    # oneYearEstimate = 0
+
+
+    # time user for calculation of the volume intensity
+    now = datetime.now()
+    market_open = now.replace(hour=9, minute=15, second=0, microsecond=0)
+    minutes_passed = max(1, (now - market_open).seconds // 60)
+    total_market_minutes = 375 # 9:15 to 3:30
+
+
+    curr = advanced_report["stock_current"]
+    op = advanced_report["stock_open"]
+    pc = advanced_report["previous_close"]
+    hi = advanced_report["day_high"]
+    lo = advanced_report["day_low"]
+    vol = advanced_report["current_volume"]
+    avg_v = advanced_report["avg_volume"]
+    tp = advanced_report["target_price"]
+    hi_52 = advanced_report["52w_high"]
+
+
+    # predictive_report = {
+    #     "intraday_pct_change": 
+        
+    # }
+
+
+    
+    analysis_metrics = {
+    # MOMENTUM: How is the price moving?
+    "intraday_pct_change": round(((curr - op) / op) * 100, 2) if op > 0 else 0,
+    "overnight_gap_pct": round(((op - pc) / pc) * 100, 2) if pc > 0 else 0,
+    "day_range_position": round(((curr - lo) / (hi - lo)) * 100, 2) if hi > lo else 0,
+
+    # CONVICTION: Is the volume supporting the move?
+    "rvol": round(vol / avg_v, 2) if avg_v > 0 else 0,
+    "volume_intensity": round(vol / (avg_v * (minutes_passed / total_market_minutes)), 2) if avg_v > 0 else 0,
+
+    # VALUATION: Is there room to grow?
+    "target_upside_pct": round(((tp - curr) / curr) * 100, 2) if curr > 0 else 0,
+    "price_to_52w_high_pct": round(((curr - hi_52) / hi_52) * 100, 2) if hi_52 > 0 else 0,
+
+    # RISK: How "bumpy" is the ride?
+    "current_volatility": round(((hi - lo) / curr) * 100, 2) if curr > 0 else 0,
+    "valuation_health": "Undervalued" if advanced_report["pe_ratio"] < 20 else "Premium"
+}
     
 
 
+
+    # creates a boolean report that can be passed into the llm that can help in providing better summary , search online for more info if needed
     signal_report = {
         "VWAP_Hold": C > M,
         "VWAP_Rejection": C < M,
@@ -97,15 +174,18 @@ def analysisPandas (path):
     }
 
 
+    # snapshot is the final frame that is retuned , it combines all the dicts above
     snapshot = {
 
         "stats": stat_report,
 
         "ohlc": ohlc_report,
         
-        "signal": signal_report
+        "signal": signal_report, 
+
+        "advanced" : advanced_report,
     }
-    # print(snapshot)
+    print(snapshot)
 
 
     return snapshot

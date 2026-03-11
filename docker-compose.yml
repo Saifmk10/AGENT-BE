@@ -39,7 +39,7 @@ services:
 
 
 
-  analyzer-message:
+  analyzer-message: # currently not in use 
     build: ./Stock_Automation/ANALYSIS_GMAIL_DOCKER
     environment:
       BASE_DIR: /app

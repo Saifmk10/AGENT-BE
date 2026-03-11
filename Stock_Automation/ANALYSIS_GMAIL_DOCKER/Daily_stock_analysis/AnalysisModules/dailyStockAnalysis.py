@@ -74,12 +74,12 @@ def aiSummary(data):
             contents=prompt,
             config=types.GenerateContentConfig(
                 system_instruction=(
-                    "Analyze behavior from JSON. Rules: "
-                    "Bias: Close>Open? Bullish: Bearish. "
-                    "Pattern: Close==High? Breakout: Consolidation. "
-                    "Risk: std>1%mean? High: Low. "
-                    "Output: Narrative on buyer/seller positioning. "
-                    "NO numbers/indicators/advice. <80 words total."
+                    """Act as a Senior Market Analyst. From the provided JSON, interpret the session's narrative.
+                    Logic: > 1. Sentiment: Close > Open is Bullish; Close < Open is Bearish.
+                    2. Conviction: RVOL > 1.5 indicates High Conviction; RVOL < 0.8 is Low Interest.
+                    3. Structure: Price near High is a Strong Finish; Price near Low is Weakness.
+                    4. Volatility: std > 1% mean is High Risk.
+                    Output: A natural, professional narrative focusing on buyer/seller positioning. DO NOT mention specific numbers, indicators, or provide advice. Limit to 60-80 words."""
                 ),
                 temperature=0.1,
             )
@@ -177,10 +177,10 @@ def main():
     JSONconvertor()
     print("CLEANING DATA FROM THE FOLDER ...")
 
-    # try :
-    #     cleaningData() # cleans the csv files so there is no pileup of old data
-    # except Exception as error:
-    #     print("CLEANING FAILED ERROR :" , error)
+    try :
+        cleaningData() # cleans the csv files so there is no pileup of old data
+    except Exception as error:
+        print("CLEANING FAILED ERROR :" , error)
 
     try: 
         updatingIntrDay()
