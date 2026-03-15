@@ -28,15 +28,27 @@ LAST_GEMINI_CALL = 0
 GEMINI_LOCK = Lock()
 GEMINI_COOLDOWN = 2.5 
 
-path = os.path.join(REPORT_DIR , "saifmkpvt@gmail.com.json")
-writePath = os.path.join(REPORT_DIR , "output.csv")
+users = os.listdir(REPORT_DIR)
+print(users)
 
-with open (path  , "r") as file:
-    fileContent = json.load(file)
+for user in users:
+    path = os.path.join(REPORT_DIR , user)
+    dataPath = os.path.join(REPORT_DIR , path)
+    print(dataPath)
+    for files in os.listdir(path):
+        print(files)
+        dailyreportPath = os.path.join(dataPath , files)
+        print(dailyreportPath)
 
-df = pd.read_json(path)
+# path = os.path.join(REPORT_DIR , "saifmkpvt@gmail.com.json")
+# writePath = os.path.join(REPORT_DIR , "output.csv")
 
-print("OLD DF:",df)
+# with open (path  , "r") as file:
+#     fileContent = json.load(file)
+
+# df = pd.read_json(path)
+
+# print("OLD DF:",df)
 
 
 # gemini ai summary , provides the summary for the current day data
@@ -101,86 +113,100 @@ def aiSummary(data):
 
 
 def dataframeConvertion():
-    with open(path , "r") as file:
-        fileContent = json.load(file)
 
-    rows = []
+    for user in users:
 
-    # the for loop is added for each new dict , so when moving into a new dict a new for loop is added to access the data from that dict
-    for items in fileContent["HISTORY"]:
-        date = items["date"]
-        summary = items["summary"]
+        userPath = os.path.join(REPORT_DIR, user)
+        print(userPath)
 
-        for stockDetails in items["report"]:
-            stock = stockDetails["stocks"]
-            analysis = stockDetails["analysis"]
+        rows = []
 
-            row = {
-                "date" : date, 
-                "summary" : summary, 
-                "stock": stock,
+        for file in os.listdir(userPath):
+
+            dailyreportPath = os.path.join(userPath, file)
+            print(dailyreportPath)
+
+            with open(dailyreportPath, "r") as f:
+                fileContent = json.load(f)
+
+            for items in fileContent["HISTORY"]:
+                date = items["date"]
+                summary = items["summary"]
+
+                for stockDetails in items["report"]:
+                    stock = stockDetails["stocks"]
+                    analysis = stockDetails["analysis"]
+
+                    row = {
+                        "date": date,
+                        "summary": summary,
+                        "stock": stock
+                    }
+
+                    row.update(analysis["stats"])
+                    row.update(analysis["ohlc"])
+                    row.update(analysis["signal"])
+                    row.update(analysis["advanced"])
+
+                    rows.append(row)
+
+        dataFrame = pd.DataFrame(rows)
+
+        print("NEW DATA FRAME:", dataFrame)
+
+        report = []
+
+        for stock, df in dataFrame.groupby("stock"):
+
+            totalWeeklyReturn = ((df['stock_current'].iloc[-1] - df['previous_close'].iloc[0]) / df['previous_close'].iloc[0]) * 100
+            volatalityExpansionRation = df['range'].max() / df['range'].min()
+            institutionalFlow = df['rvol'].iloc[-1]
+            behaviouralBias = df['Late_Buying'].mean()
+            absorptionRate = df['Dip_Absorption'].mean()
+            squeezeDetcted = "Yes" if df['range'].min() < (df['range'].mean() * 0.6) else "No"
+
+            finalReport = {
+                "net_weekly_return": float(totalWeeklyReturn),
+                "volatility_expansion_ratio": float(volatalityExpansionRation),
+                "volume_conviction_score": float(institutionalFlow),
+                "closing_sentiment_bias": float(behaviouralBias),
+                "liquidity_absorption_rate": float(absorptionRate),
+                "consolidation_squeeze_alert": squeezeDetcted
             }
-            
-            row.update(analysis["stats"])
-            row.update(analysis["ohlc"])
-            row.update(analysis["signal"])
-            row.update(analysis["advanced"])
 
-            rows.append(row)
+            report.append({
+                "stock": stock,
+                "report": finalReport
+            })
 
-    df = pd.DataFrame(rows)
+        currentDate = datetime.now().strftime("%d-%m-%Y")
+        ist = datetime.now(ZoneInfo("Asia/Kolkata"))
+        currentTime = ist.strftime("%H:%M:%S")
 
-    df.to_csv(writePath , index=False)
+        # ---- SINGLE AI CALL ----
+        forAi = {
+            "stocks": report
+        }
 
-    print("NEW DATA FRAME:" , df)
-            
-    # report = {}
+        aiReport = aiSummary(forAi)
 
-    totalWeeklyReturn = ((df['stock_current'].iloc[-1] - df['previous_close'].iloc[0]) / df['previous_close'].iloc[0]) * 100
-    volatalityExpansionRation = df['range'].max() / df['range'].min()
-    institutionalFlow = df['rvol'].iloc[-1]
-    behaviouralBias = df['Late_Buying'].mean()
-    absorptionRate = df['Dip_Absorption'].mean()
-    squeezeDetcted = "Yes" if df['range'].min() < (df['range'].mean() * 0.6) else "No"
+        finalOutput = {
+            "date": currentDate,
+            "time": currentTime,
+            "stocks": report,
+            "summary": aiReport
+        }
 
+        print("FINAL REPORT FOR USER ----->", user, ":", finalOutput)
 
-    currentDate = datetime.now().strftime("%d-%m-%Y")
-    ist = datetime.now(ZoneInfo("Asia/Kolkata"))
-    currentTime = ist.strftime("%H:%M:%S")
+        WRITE_PATH = os.path.join(REPORT_DIR, "report",f"{user}.json")
 
-
-    finalReport = {
-    "net_weekly_return": totalWeeklyReturn,
-    "volatility_expansion_ratio": volatalityExpansionRation,
-    "volume_conviction_score": institutionalFlow,      
-    "closing_sentiment_bias": behaviouralBias,
-    "liquidity_absorption_rate": absorptionRate,
-    "consolidation_squeeze_alert": squeezeDetcted,
-    }
+        with open(WRITE_PATH , "w") as file:
+            json.dump(finalOutput , file , indent=4)
 
 
-    forAi = {
-        # "date" : currentDate,
-        # "time" : currentTime,
-        "stock" : stock,
-        "report" : finalReport,
-    }
-
-    aiReport = aiSummary(forAi)
 
 
-    report = {
-        "date" : currentDate,
-        "time" : currentTime,
-        "stock" : stock,
-        "report" : finalReport,
-        "summary": aiReport
-    }
-    
-
-    print("FINAL REPORT : " , report)
-
-    # return final_report
 
 dataframeConvertion()
 
