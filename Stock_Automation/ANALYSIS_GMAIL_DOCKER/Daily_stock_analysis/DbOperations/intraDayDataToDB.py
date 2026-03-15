@@ -1,5 +1,5 @@
 import os
-from connection import db
+from .connection import db
 from firebase_admin import auth
 # from google.api_core import exceptions
 from  datetime import datetime
@@ -19,6 +19,7 @@ ist = pytz.timezone("Asia/Kolkata")
 time = datetime.now(ist)
 currentTime = time.strftime("%H:%M:%S")
 todaysDate = time.strftime("%d-%m-%Y")
+# todaysDate = "12-03-2026"
 
 def fetchingUserAddedStock():
 
@@ -147,4 +148,4 @@ def updatingIntrDay ():
     
 
 # print(data)
-updatingIntrDay()
+# updatingIntrDay()
