@@ -55,6 +55,10 @@ GEMINI_COOLDOWN = 2.5
 def aiSummary(data):
     global LAST_GEMINI_CALL
 
+    LLM_MODEL = ["gemini-3-flash-preview",
+        "gemini-2.5-flash",
+        "gemini-2.0-flash"]
+
     with GEMINI_LOCK:
         now = time.time()
         remaining = GEMINI_COOLDOWN - (now - LAST_GEMINI_CALL)
@@ -68,37 +72,51 @@ def aiSummary(data):
 
     prompt = f"Analyze: {data}"
 
-    try : 
-        response = client.models.generate_content(
-            model="gemini-3-flash-preview",
-            contents=prompt,
-            config=types.GenerateContentConfig(
-                system_instruction=(
-                    """Act as a Senior Market Analyst. From the provided JSON, interpret the session's narrative.
-                    Logic: > 1. Sentiment: Close > Open is Bullish; Close < Open is Bearish.
-                    2. Conviction: RVOL > 1.5 indicates High Conviction; RVOL < 0.8 is Low Interest.
-                    3. Structure: Price near High is a Strong Finish; Price near Low is Weakness.
-                    4. Volatility: std > 1% mean is High Risk.
-                    Output: A natural, professional narrative focusing on buyer/seller positioning. DO NOT mention specific numbers, indicators, or provide advice. Limit to 60-80 words."""
-                ),
-                temperature=0.1,
+    for models in LLM_MODEL:
+        try : 
+
+            print("Trying model:", models)
+
+            response = client.models.generate_content(
+                model=models,
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    system_instruction=(
+                        """
+                        Act as a Senior Market Analyst. From the provided JSON, interpret the session's narrative for one or more stocks. 
+                        Output MUST be a single Python-parsable dictionary where keys are stock tickers and values are the narrative strings.
+                        
+                        Logic:
+                        1. Sentiment: Close > Open is Bullish; Close < Open is Bearish.
+                        2. Conviction: RVOL > 1.5 indicates High Conviction; RVOL < 0.8 is Low Interest.
+                        3. Structure: Price near High is a Strong Finish; Price near Low is Weakness.
+                        4. Volatility: std > 1% mean is High Risk.
+                        
+                        Output Requirements:
+                        - A natural, professional narrative focusing on buyer/seller positioning. 
+                        - DO NOT mention specific numbers, indicators, or provide advice. 
+                        - Limit each narrative to 60-80 words.
+                        - Return ONLY the dictionary.               
+
+                        """
+                    ),
+                    temperature=0.1,
+                )
             )
-        )
 
 
-        text = getattr(response, "text", None)
-        if not text:
-            raise RuntimeError("Empty response from Gemini")
+            text = getattr(response, "text", None)
+            if not text:
+                raise RuntimeError("Empty response from Gemini")
 
-        print(f"Gemini time: {round(time.perf_counter() - start, 3)}s")
-        print(f"Input Tokens: {response.usage_metadata.prompt_token_count}")
-        print(f"Output Tokens: {response.usage_metadata.candidates_token_count}")
-        print(f"Total Tokens: {response.usage_metadata.total_token_count}")
-        return text.strip()
-    
-    except Exception as error:
-        print("ERROR IN GEMINI RESPONSE :" , error)
+            print(f"Gemini time: {round(time.perf_counter() - start, 3)}s")
+            print(f"Input Tokens: {response.usage_metadata.prompt_token_count}")
+            print(f"Output Tokens: {response.usage_metadata.candidates_token_count}")
+            print(f"Total Tokens: {response.usage_metadata.total_token_count}")
+            return text.strip()
 
+        except Exception as error:
+            print("ERROR IN GEMINI RESPONSE :" , error)
 
 
 
