@@ -4,27 +4,27 @@ from pathlib import Path
 #this will fetch the path where the csv file are added to [NOTE] : change the path if the file path has been changed
 # PATH_ACCESS = "/home/saifmk10/AGENT-DATA/Stock-Data/csvFiles/" # use for TESTING ONLY
 
-DOCKER_PATH = os.environ.get("DOCKER_PATH")
-PATH_ACCESS = os.path.join(DOCKER_PATH , "csvFiles")
+# DOCKER_PATH = os.environ.get("DOCKER_PATH")
+# PATH_ACCESS = os.path.join(DOCKER_PATH , "csvFiles")
 
 
 
 # function will be fetching all the files that are added into the analysis on a daily basis , this provides the data to the function bellow whicch is reposnsible for keeping the folder clean
-def accessingData():
+def accessingData(path):
     returnedFinalpath = []
     userGmailFile = []
 
 
     # this will list all the user email that are being were added into the path as part of the analysis
-    listedUserEmail = os.listdir(PATH_ACCESS)
+    listedUserEmail = os.listdir(path)
     # print(listed)
     # returnedFinalpath = []
 
-    if os.path.exists(PATH_ACCESS):
+    if os.path.exists(path):
         try : 
             for file in listedUserEmail:
                 print("USER EMAIL AS SAVED :",file)
-                usersPath = os.path.join(PATH_ACCESS , file) #this will create the path of each user so the csv for each user can be accessed
+                usersPath = os.path.join(path , file) #this will create the path of each user so the csv for each user can be accessed
                 # print("-----------> USER PATH" , usersPath)
                 fileContent = os.listdir(usersPath) # this will fetch all the file content in form od a list 
                 # print("CONTENT LIST:",fileContent)
@@ -51,8 +51,8 @@ def accessingData():
 
 
 # handles the deletion of the files and also the deletion of the user folders that was created under the user email
-def cleaningData():
-    userDataPath , userDataFilePath = accessingData()
+def cleaningData(userpath):
+    userDataPath , userDataFilePath = accessingData(userpath)
 
 
     if userDataFilePath :
