@@ -196,7 +196,7 @@ def main():
     print("CLEANING DATA FROM THE FOLDER ...")
 
     try :
-        cleaningData() # cleans the csv files so there is no pileup of old data
+        cleaningData(DATA_DIR) # cleans the csv files so there is no pileup of old data
     except Exception as error:
         print("CLEANING FAILED ERROR :" , error)
 
