@@ -6,13 +6,13 @@ from  datetime import datetime
 import pytz
 import json
 
-# DATA_DIR = "/home/saifmk10/AGENT-SERVICES/AGENT-BE/test/csvFiles"
-# REPORT_DIR = "/home/saifmk10/AGENT-SERVICES/AGENT-BE/test/reports"
+DATA_DIR = "/home/saifmk10/AGENT-SERVICES/AGENT-BE/test/csvFiles"
+REPORT_DIR = "/home/saifmk10/AGENT-SERVICES/AGENT-BE/test/reports"
 
 # [NOTE] docker path used for prod only
-DOCKER_PATH = os.environ.get("DOCKER_PATH")
-DATA_DIR = os.path.join(DOCKER_PATH , "csvFiles")
-REPORT_DIR = os.path.join(DOCKER_PATH , "reports")
+# DOCKER_PATH = os.environ.get("DOCKER_PATH")
+# DATA_DIR = os.path.join(DOCKER_PATH , "csvFiles")
+# REPORT_DIR = os.path.join(DOCKER_PATH , "reports")
 
 
 ist = pytz.timezone("Asia/Kolkata")
