@@ -11,15 +11,18 @@ from zoneinfo import ZoneInfo
 import time
 from threading import Lock
 import os
+from dotenv import load_dotenv
+load_dotenv()
 # from datetime import date
 import json 
 import pandas as pd
 import google.genai as genai
 from google.genai import types
 # from Stock_analysis_modules.collectedDataAnalysis import  fetchCollectedData
-# from Csv_path_cleaner.cleaningCollectedCsv import cleaningData # =====> change this later
+# from Csv_path_cleaner.cleaningCollectedCsv import cleaningData 
+from Stock_Automation.ANALYSIS_GMAIL_DOCKER.Csv_path_cleaner.cleaningCollectedCsv import cleaningData 
 # from Daily_stock_analysis.DbOperations.intraDayDataToDB import updatingIntrDay
-from LLM_API_KEYS import gemini_api_key
+# from LLM_API_KEYS import gemini_api_key
 # from dotenv import load_dotenv
 
 # [NOTE] docker path used for prod only
@@ -58,7 +61,7 @@ def aiSummary(data):
 
     start = time.perf_counter()
 
-    client = genai.Client(api_key=gemini_api_key)
+    client = genai.Client(api_key=os.getenv("gemini_api_key"))
 
     prompt = f"Analyze: {data}"
 
@@ -128,6 +131,7 @@ def dataframeConvertion():
             print(userPath)
 
             rows = []
+            dailyreportPath = None
 
             for file in os.listdir(userPath):
 
@@ -196,13 +200,13 @@ def dataframeConvertion():
                 "stocks": report
             }
 
-            aiReport = aiSummary(forAi)
+            # aiReport = aiSummary(forAi)
 
             finalOutput = {
                 "date": currentDate,
                 "time": currentTime,
                 "stocks": report,
-                "summary": aiReport
+                # "summary": aiReport
             }
 
             print("FINAL REPORT FOR USER ----->", user, ":", finalOutput)
@@ -215,12 +219,30 @@ def dataframeConvertion():
                     json.dump(finalOutput , file , indent=4)
             except OSError as error:
                 print("FAILED TO ADD USER DATA INTO PATH [error]:" , error)
+
+              
     except Exception as error:
         print("ERROR CASUED IN WEEEKLY DATA ANALYSIS [error]:" , error)
 
 
 
 
-dataframeConvertion()
 
+
+
+def main():
+    print("RUNNING WEEKLY STOCK ANALYSIS ...")
+    dataframeConvertion()
+
+    try:
+        cleaningData(REPORT_DIR)
+    except Exception as error:
+        print("CLEANING FAILED ERROR :" , error)
+
+    # try: 
+    #     updatingIntrDay()
+    # except Exception as error:
+    #     print("FAILED TO WRITE DATA INTO DB :" , error)
+
+# main()
 
