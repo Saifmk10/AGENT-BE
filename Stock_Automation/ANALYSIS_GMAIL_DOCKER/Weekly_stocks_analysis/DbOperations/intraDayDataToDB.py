@@ -6,13 +6,13 @@ from  datetime import datetime
 import pytz
 import json
 
-DATA_DIR = "/home/saifmk10/AGENT-SERVICES/AGENT-BE/test/csvFiles"
-REPORT_DIR = "/home/saifmk10/AGENT-SERVICES/AGENT-BE/test/reports"
+# DATA_DIR = "/home/saifmk10/AGENT-SERVICES/AGENT-BE/test/csvFiles"
+# REPORT_DIR = "/home/saifmk10/AGENT-SERVICES/AGENT-BE/test/weekly_report/report"
 
 # [NOTE] docker path used for prod only
-# DOCKER_PATH = os.environ.get("DOCKER_PATH")
-# DATA_DIR = os.path.join(DOCKER_PATH , "csvFiles")
-# REPORT_DIR = os.path.join(DOCKER_PATH , "reports")
+DOCKER_PATH = os.environ.get("DOCKER_PATH")
+DATA_DIR = os.path.join(DOCKER_PATH , "reports")
+REPORT_DIR = os.path.join(DOCKER_PATH , "reports" , "weekly_report" , "report")
 
 
 ist = pytz.timezone("Asia/Kolkata")
@@ -83,66 +83,47 @@ def updatingIntrDay ():
 
     # the for loop takes all the emails present in the db , then the emails are joined to the path and of path exists file is extracted if not then ignored
     for email in dbUserEmail:
-        try : 
-            userEmailPath = os.path.join(REPORT_DIR , email)
-            # print(userEmailPath)
-            userJsonList = os.listdir(userEmailPath)
-            # print(processedJson)
+        try :
+            userDataPath = os.path.join(REPORT_DIR, f"{email}.json")
+            print("Final Paths", userDataPath)
 
-            # 
-            for file in userJsonList:
-                userDataPath = os.path.join(userEmailPath , file)
-                print(userDataPath)
-                
-                if os.path.exists(userDataPath):
+            if not os.path.exists(userDataPath):
+                print(f"file Error : report not found for {email}")
+                continue
 
-                    try :
-                        with open(userDataPath , "r" , encoding="utf-8") as fileContent : 
-                            content = fileContent.read()
-                            jsonFormat = json.loads(content)
+            try:
+                with open(userDataPath, "r", encoding="utf-8") as fileContent:
+                    content = fileContent.read()
+                    jsonFormat = json.loads(content)
 
+                data = {
+                    "date": jsonFormat["date"],
+                    "time": jsonFormat["time"],
+                    "stocks": jsonFormat["stocks"]
+                }
 
-                        for day in jsonFormat["HISTORY"]:
-                            if day["date"] == todaysDate:
-                                dataForDate = day
-                                print("UPDATED USER DATA WITH DATE " , dataForDate)
-                                break
+            except (FileNotFoundError, PermissionError, IsADirectoryError, UnicodeDecodeError, OSError) as error:
+                print("ERROR READING DATA FROM FILES IN datatoDatabase.py , [ERROR]:", error)
+                continue
 
-                        # data = dataForDate["report"]
-                        data = {
-                            "date": dataForDate["date"],
-                            "report": dataForDate["report"],
-                            "summary": dataForDate["summary"]
-                        }
-                    
-                    except (FileNotFoundError, PermissionError, IsADirectoryError, UnicodeDecodeError, OSError):
-                        print("ERROR READING DATA FROM FILES IN datatoDatabase.py , [ERROR]:" , error)
+            userCred = auth.get_user_by_email(email)
+            uid = userCred.uid
+            print("UID --->", userCred.uid)
 
+            try:
+                ref = (db.collection("Users").document(uid).collection("Agents").document("Finance").collection("Stock_Data").document("WeeklyStockData").collection("Data").document(todaysDate))
 
+                ref.set({
+                    "last_added": currentTime,
+                    "DATA": data
+                })
 
-                    
-                    userCred = auth.get_user_by_email(email)
-                    uid = userCred.uid
-                    print("UID --->" , userCred.uid)
+                print("---> DATA ADDED INTO UID : ", uid)
+            except Exception as error:
+                print("ERROR IN FB -->", error)
 
-                    try:
-                        ref = (db.collection("Users").document(uid).collection("Agents").document("Finance").collection("Stock_Data").document("IntraDay").collection("Data").document(todaysDate))
-
-                        ref.set({
-                            "last_added" : currentTime, 
-                            "DATA" : data
-                        })
-
-                        print("---> DATA ADDED INTO UID : " , uid)
-                    # except ( PermissionDenied, NotFound, AlreadyExists, InvalidArgument, ResourceExhausted, DeadlineExceeded, Aborted, Unavailable )
-                    except Exception as error :
-                        print("ERROR IN FB -->" , error)
-
-
-                # print(content)
-
-        except (FileNotFoundError , IsADirectoryError , OSError ) as error : 
-            print("file Error :" , error)
+        except (FileNotFoundError, IsADirectoryError, OSError) as error:
+            print("file Error :", error)
             continue
 
     
