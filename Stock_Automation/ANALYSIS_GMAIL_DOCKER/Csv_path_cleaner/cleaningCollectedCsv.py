@@ -23,6 +23,8 @@ def accessingData(path):
     if os.path.exists(path):
         try : 
             for file in listedUserEmail:
+                if "@" not in file:
+                    continue
                 print("USER EMAIL AS SAVED :",file)
                 usersPath = os.path.join(path , file) #this will create the path of each user so the csv for each user can be accessed
                 # print("-----------> USER PATH" , usersPath)

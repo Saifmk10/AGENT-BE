@@ -50,6 +50,17 @@ services:
 
 
 
+  weekly-analysis: # currently not in use 
+    build: ./Stock_Automation/ANALYSIS_GMAIL_DOCKER
+    environment:
+      BASE_DIR: /app
+      DOCKER_PATH: /app/Data_collection_automation/Analysed_Files_data
+      gemini_api_key: ${gemini_api_key}
+    volumes:
+      - /home/saifmk10/AGENT-DATA/Stock-Data:/app/Data_collection_automation/Analysed_Files_data
+    command: python -m runWeeklyAnalysis
+
+
   # runs the ollama model from where he anaylyzed access the data form the 
   ollama:
     image: ollama/ollama

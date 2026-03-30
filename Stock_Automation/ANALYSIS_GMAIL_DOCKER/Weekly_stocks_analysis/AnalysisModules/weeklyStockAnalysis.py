@@ -11,6 +11,8 @@ from zoneinfo import ZoneInfo
 import time
 from threading import Lock
 import os
+import sys
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..'))
 from dotenv import load_dotenv
 load_dotenv()
 # from datetime import date
@@ -20,26 +22,28 @@ import google.genai as genai
 from google.genai import types
 # from Stock_analysis_modules.collectedDataAnalysis import  fetchCollectedData
 # from Csv_path_cleaner.cleaningCollectedCsv import cleaningData 
-from Stock_Automation.ANALYSIS_GMAIL_DOCKER.Csv_path_cleaner.cleaningCollectedCsv import cleaningData 
+from Csv_path_cleaner.cleaningCollectedCsv import cleaningData
 # from Daily_stock_analysis.DbOperations.intraDayDataToDB import updatingIntrDay
 # from LLM_API_KEYS import gemini_api_key
 # from dotenv import load_dotenv
 
+from Weekly_stocks_analysis.DbOperations.intraDayDataToDB import updatingIntrDay
+
 # [NOTE] docker path used for prod only
-# DOCKER_PATH = os.environ.get("DOCKER_PATH")
-# DATA_DIR = os.path.join(DOCKER_PATH , "csvFiles")
-# REPORT_DIR = os.path.join(DOCKER_PATH , "reports")
+DOCKER_PATH = os.environ.get("DOCKER_PATH")
+FINAL_REPORT_DIR = os.path.join(DOCKER_PATH , "reports" , "weekly_report")
+REPORT_DIR = os.path.join(DOCKER_PATH , "reports")
 
 
 # [NOTE] used for testing 
-FINAL_REPORT_DIR = "/home/saifmk10/AGENT-SERVICES/AGENT-BE/test/weekly_report/"
-REPORT_DIR = "/home/saifmk10/AGENT-SERVICES/AGENT-BE/test/weekly_report/data"
+# FINAL_REPORT_DIR = "/home/saifmk10/AGENT-SERVICES/AGENT-BE/test/weekly_report/"
+# REPORT_DIR = "/home/saifmk10/AGENT-SERVICES/AGENT-BE/test/weekly_report/data"
 
 LAST_GEMINI_CALL = 0
 GEMINI_LOCK = Lock()
 GEMINI_COOLDOWN = 2.5 
 
-users = os.listdir(REPORT_DIR)
+users = [u for u in os.listdir(REPORT_DIR) if "@" in u]
 print(users)
 
 
@@ -200,13 +204,13 @@ def dataframeConvertion():
                 "stocks": report
             }
 
-            # aiReport = aiSummary(forAi)
+            aiReport = aiSummary(forAi)
 
             finalOutput = {
                 "date": currentDate,
                 "time": currentTime,
                 "stocks": report,
-                # "summary": aiReport
+                "summary": aiReport
             }
 
             print("FINAL REPORT FOR USER ----->", user, ":", finalOutput)
@@ -233,6 +237,11 @@ def dataframeConvertion():
 def main():
     print("RUNNING WEEKLY STOCK ANALYSIS ...")
     dataframeConvertion()
+
+    try:
+        updatingIntrDay()
+    except Exception as error:
+        print("FAILED TO WRITE DATA INTO DB :" , error)
 
     try:
         cleaningData(REPORT_DIR)
