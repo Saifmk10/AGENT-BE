@@ -37,11 +37,14 @@ def gainers():
                 current_price_tag = li.select_one("div.xVyTdb.ghTit div.SEGxAb div.BAftM span.P2Luy")
     
 
+                ticker_tag = li.select_one("div.COaKTb")
+
                 if name_tag and price_tag :
                     name = name_tag.text.strip()
                     price = price_tag.text.strip().replace("\u20b9" , "") #stock price filtered and raedy to e appended into the list
                     current_price = current_price_tag.text.strip()
-                    stocks.append({"name": name, "price": price , "current" : current_price})
+                    ticker = ticker_tag.text if ticker_tag else None
+                    stocks.append({"name": name, "ticker": ticker, "price": price , "current" : current_price})
 
             return {"trending_stocks": stocks[:20]}
 
@@ -50,6 +53,7 @@ def gainers():
         
 
 
-# result = gainers()
-# print(result)
+result = gainers()
+print(result)
+   
    
