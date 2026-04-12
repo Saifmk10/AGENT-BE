@@ -96,7 +96,8 @@ def aiSummary(data):
                         - A natural, professional narrative focusing on buyer/seller positioning. 
                         - DO NOT mention specific numbers, indicators, or provide advice. 
                         - Limit each narrative to 60-80 words.
-                        - Return ONLY the dictionary.               
+                        - Return ONLY the dictionary.           
+                        - Do NOT wrap the output in markdown or code fences (no ```).    
 
                         """
                     ),

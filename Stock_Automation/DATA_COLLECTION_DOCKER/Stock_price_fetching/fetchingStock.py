@@ -181,7 +181,7 @@ def main () :
             jobs.add(stock)
 
     try:
-        with ThreadPoolExecutor(max_workers=min(5, len(jobs))) as executor:
+        with ThreadPoolExecutor(max_workers=len(jobs)) as executor:
             executor.map(priceFetcher, jobs)
     except KeyboardInterrupt:
         print("FETCHING STOCK STOPPED BY KEYBOARD..")
