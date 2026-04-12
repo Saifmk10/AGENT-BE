@@ -8,7 +8,7 @@ import json
 
 
 # function that is responsible for fetching the stock price and the stock name
-def looser():
+def looser(numberOfStocks):
     url = "https://www.google.com/finance/markets/losers"
     response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"})
 
@@ -42,16 +42,15 @@ def looser():
                     name = name_tag.text.strip()
                     price = price_tag.text.strip().replace("\u20b9" , "") #stock price filtered and raedy to e appended into the list
                     current_price = current_price_tag.text.strip()
-                    stocks.append({"name": name, "price": price , "current" : current_price})
                     ticker = ticker_tag.text if ticker_tag else None
                     stocks.append({"name": name, "ticker": ticker, "price": price , "current" : current_price})
-            return {"trending_stocks": stocks[:20]}
+            return {"trending_stocks": stocks[:numberOfStocks]}
 
         except Exception as e:
             return {"error": str(e)}
         
 
 
-result = looser()
-print(result)
+# result = looser()
+# print(result)
    

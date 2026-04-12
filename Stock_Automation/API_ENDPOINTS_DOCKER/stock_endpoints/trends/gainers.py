@@ -8,7 +8,7 @@ import json
 
 
 # function that is responsible for fetching the stock price and the stock name
-def gainers():
+def gainers(numberOfStocks):
     url = "https://www.google.com/finance/markets/gainers"
     response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"})
 
@@ -46,14 +46,14 @@ def gainers():
                     ticker = ticker_tag.text if ticker_tag else None
                     stocks.append({"name": name, "ticker": ticker, "price": price , "current" : current_price})
 
-            return {"trending_stocks": stocks[:20]}
+            return {"trending_stocks": stocks[:numberOfStocks]}
 
         except Exception as e:
             return {"error": str(e)}
         
 
 
-result = gainers()
-print(result)
+# result = gainers()
+# print(result)
    
    
