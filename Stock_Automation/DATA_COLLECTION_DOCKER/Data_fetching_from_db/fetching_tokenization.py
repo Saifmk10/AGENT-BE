@@ -3,11 +3,17 @@
 #once the data has been fetched the data will be then send to the logics reponsible for fetching the stock name and all the analysis
 #once the stock has been fetched it is then added into the fuzzy logic where the stock name is matched with the token that the api can understand
 # Data_fetching_from_db.
-from .connection import db       #a file thay contains all the code for the connection to the db
-import os , csv
+try:
+    from Data_fetching_from_db.connection import db  # production (package import)
+except ImportError:
+    from connection import db  # test / direct script run
+import os , csv , re
 from rapidfuzz import process, fuzz
 
 
+
+# FOR DEVELOPERS:
+# to run the module us -m or using cd Stock_Automation/DATA_COLLECTION_DOCKER && source ./environment/bin/activate && cd Data_fetching_from_db and then run the file
 
 
 
@@ -37,27 +43,38 @@ def loadTickerList():
 
 
 # bellow code is for the fuzzy logic , where the code for fetching the data set has been placed so that the dataset is accessed only when called.
-def fuzzyLogic(user_input, stock_dict, threshold=85):
-    if not user_input or not stock_dict:
-        return None
+# def fuzzyLogic(user_input, stock_dict, threshold=85):
+#     if not user_input or not stock_dict:
+#         return None
 
-    company_names = list(stock_dict.values())
+#     # 1. direct symbol match — user typed the ticker itself (e.g. "SBIN", "ONGC")
+#     upper_input = user_input.strip().upper()
+#     if upper_input in stock_dict:
+#         print(f"Direct symbol match: '{user_input}' → '{upper_input}'")
+#         return upper_input
 
-    match = process.extractOne(
-        user_input,
-        company_names,
-        scorer=fuzz.WRatio
-    )
+#     # 2. normalize input and all company names to strip corporate suffixes
+#     normalized_input = _normalize(user_input)
+#     symbols = list(stock_dict.keys())
+#     company_names = list(stock_dict.values())
+#     normalized_names = [_normalize(name) for name in company_names]
 
-    if not match:
-        return None
+#     # 3. run multiple scorers and take the best score across all strategies
+#     best_score = 0
+#     best_index = -1
 
-    matched_name, score, index = match
+#     for scorer in (fuzz.WRatio, fuzz.token_set_ratio, fuzz.token_sort_ratio):
+#         match = process.extractOne(normalized_input, normalized_names, scorer=scorer)
+#         if match and match[1] > best_score:
+#             best_score = match[1]
+#             best_index = match[2]
 
-    if score < threshold:
-        return None
+#     if best_score < threshold or best_index == -1:
+#         print(f"No match found for '{user_input}' (best score={best_score})")
+#         return None
 
-    return list(stock_dict.keys())[index]
+#     print(f"Fuzzy match: '{user_input}' → '{symbols[best_index]}' ({company_names[best_index]}) [score={best_score}]")
+#     return symbols[best_index]
 
 
 
@@ -105,7 +122,7 @@ def fetchingUserAddedStock():
                 data = stocks.to_dict()
                 # print(userEmail)
                 # print(data["stockName"])
-                addedStock.append(data["stockName"])
+                addedStock.append(data["StockTicker"])
 
             try:
 
@@ -137,7 +154,7 @@ def fetchingUserAddedStock():
         symbol = [] #holds all the conversted stock names into symbols
 
         for stockName in stock:
-            value = fuzzyLogic(stockName , stockDict)
+            value = stockName
             if value : 
                 symbol.append(value)
 
@@ -155,4 +172,4 @@ def fetchingUserAddedStock():
     
 
 # debug only
-# print(fetchingUserAddedStock())
+print(fetchingUserAddedStock())
