@@ -120,9 +120,10 @@ def fetchingUserAddedStock():
             # once the user is cinfirned to have a stock_added in the db then the stock will be fetched
             for stocks in fetchingStockNames:
                 data = stocks.to_dict()
+                print(data)
                 # print(userEmail)
                 # print(data["stockName"])
-                addedStock.append(data["StockTicker"])
+                addedStock.append(stocks.to_dict().get("StockTicker")) # only the stock name is added to the list and then the list is added to the userAddedStocks list with the email as the key for that list
 
             try:
 
