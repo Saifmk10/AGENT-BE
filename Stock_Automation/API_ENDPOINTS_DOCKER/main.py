@@ -9,6 +9,7 @@ from stock_endpoints.options.searchedStock import SearchedStockPrice
 from stock_endpoints.trends.gainers import gainers
 from stock_endpoints.trends.looser import looser
 from stock_endpoints.trends.mostActive import mostActive
+from stock_endpoints.news.trendingNews import trendingNews
 
 app = FastAPI()
 
@@ -52,6 +53,15 @@ def get_looser(limit: int = Query(5, ge=1, le=500)):
 def get_mostActive(limit: int = Query(5, ge=1, le=500)):
     return mostActive(limit)
 # http://127.0.0.1:8000/mostActive?limit=2 format to use 
+
+
+
+
+# news section
+
+@app.get("/trendingNews")
+def get_trendingNews(limit : int = Query(5, ge=1, le=200)):
+    return trendingNews(limit)
 
 
 # to run the application manually use [uvicorn main:app --reload]
