@@ -31,6 +31,28 @@ def init_storage():
     os.makedirs(DATA_DIR, exist_ok=True)
     os.makedirs(REPORT_DIR, exist_ok=True)
 
+
+def parse_market_cap(market_cap_str):
+    """Convert market cap to numeric value"""
+    try:
+        if isinstance(market_cap_str, str):
+            market_cap_str = market_cap_str.strip()
+            
+            # Check if it already has a suffix
+            multipliers = {'B': 1e9, 'M': 1e6, 'K': 1e3}
+            
+            for suffix, multiplier in multipliers.items():
+                if suffix in market_cap_str:
+                    value = float(market_cap_str.replace(suffix, '').strip())
+                    return value * multiplier
+            
+            # If no suffix, try to parse as float (already numeric)
+            return float(market_cap_str)
+        
+        return float(market_cap_str) if market_cap_str else 0
+    except:
+        return 0
+
         
 
 # function reposnsible for the main analysis of that data that has been collected
@@ -59,9 +81,9 @@ def analysisPandas (path):
         "range" : dataFrame["EXTRACTED_PRICE"].max() - dataFrame["EXTRACTED_PRICE"].min(),
         
         # volume data
-        "opening_vol" : dataFrame["STOCK_VOLUME"].min(),
-        "closing_vol" : dataFrame["STOCK_VOLUME"].max(), 
-        "average_vol" : dataFrame["STOCK_VOLUME"].mean(),
+        "opening_vol" : dataFrame["STOCK_VOLUME"].iloc[0],
+        "closing_vol" : dataFrame["STOCK_VOLUME"].iloc[-1], 
+        "average_vol" : dataFrame["STOCK_AVG_VOLUME"].iloc[0],  # Use the API's average_vol directly
     }
 
 
@@ -74,6 +96,13 @@ def analysisPandas (path):
     }
 
 
+    market_cap_str = str(dataFrame["STOCK_MARKET_CAP"].iloc[0])
+    market_cap_numeric = parse_market_cap(market_cap_str)
+
+    bid_price = dataFrame["STOCK_BID"].iloc[-1] if dataFrame["STOCK_BID"].iloc[-1] > 0 else 0.0
+    ask_price = dataFrame["STOCK_ASK"].iloc[-1] if dataFrame["STOCK_ASK"].iloc[-1] > 0 else 0.0
+    bid_ask_spread = round((ask_price - bid_price) / ask_price * 100, 2) if ask_price > bid_price and ask_price > 0 else 0
+
     advanced_report = {
     "stock_open": dataFrame["STOCK_OPEN"].iloc[0],         # Price at market start
     "stock_current": dataFrame["EXTRACTED_PRICE"].iloc[-1],# Most recent price
@@ -84,9 +113,15 @@ def analysisPandas (path):
     "avg_volume": dataFrame["STOCK_AVG_VOLUME"].iloc[0],   # Normal daily volume
     "target_price": dataFrame["STOCK_TARGET_PRICE"].iloc[0], # Analyst 1-year goal
     "pe_ratio": dataFrame["STOCK_PE_RATIO"].iloc[0],         # Valuation ratio
-    "52w_high": dataFrame["STOCK_52_WEEK_HIGH"].max(),       # Yearly resistance level
-    "intraday_change_pct": ((dataFrame["EXTRACTED_PRICE"].iloc[-1] - dataFrame["STOCK_OPEN"].iloc[0]) / dataFrame["STOCK_OPEN"].iloc[0]) * 100,
-    "rvol": dataFrame["STOCK_VOLUME"].iloc[-1] / dataFrame["STOCK_AVG_VOLUME"].iloc[0]
+    "52w_high": dataFrame["STOCK_52_WEEK_HIGH"].iloc[0],       # Yearly resistance level
+    "52w_low": dataFrame["STOCK_52_WEEK_LOW"].iloc[0],       # Yearly support level
+    "market_cap": market_cap_numeric,
+    "market_cap_str": market_cap_str,
+    "bid": bid_price,
+    "ask": ask_price,
+    "bid_ask_spread_pct": bid_ask_spread,
+    "intraday_change_pct": ((dataFrame["EXTRACTED_PRICE"].iloc[-1] - dataFrame["STOCK_OPEN"].iloc[0]) / dataFrame["STOCK_OPEN"].iloc[0]) * 100 if dataFrame["STOCK_OPEN"].iloc[0] > 0 else 0,
+    "rvol": round(dataFrame["STOCK_VOLUME"].iloc[-1] / dataFrame["STOCK_AVG_VOLUME"].iloc[0], 2) if dataFrame["STOCK_AVG_VOLUME"].iloc[0] > 0 else 0
     }
     
 
@@ -108,9 +143,16 @@ def analysisPandas (path):
 
 
     # time user for calculation of the volume intensity
-    now = datetime.now()
-    market_open = now.replace(hour=9, minute=15, second=0, microsecond=0)
-    minutes_passed = max(1, (now - market_open).seconds // 60)
+    try:
+        last_time_str = dataFrame["EXTRACTED_TIME"].iloc[-1]
+        last_time = datetime.strptime(str(last_time_str), "%H:%M:%S").time()
+        market_open_time = datetime.strptime("09:15:00", "%H:%M:%S").time()
+        
+        last_datetime = datetime.combine(datetime.today(), last_time)
+        open_datetime = datetime.combine(datetime.today(), market_open_time)
+        minutes_passed = max(1, int((last_datetime - open_datetime).total_seconds() / 60))
+    except:
+        minutes_passed = 375
     total_market_minutes = 375 # 9:15 to 3:30
 
 
@@ -143,12 +185,13 @@ def analysisPandas (path):
     "volume_intensity": round(vol / (avg_v * (minutes_passed / total_market_minutes)), 2) if avg_v > 0 else 0,
 
     # VALUATION: Is there room to grow?
-    "target_upside_pct": round(((tp - curr) / curr) * 100, 2) if curr > 0 else 0,
+    "target_upside_pct": round(((tp - curr) / curr) * 100, 2) if curr > 0 and tp > 0 else 0,
     "price_to_52w_high_pct": round(((curr - hi_52) / hi_52) * 100, 2) if hi_52 > 0 else 0,
 
     # RISK: How "bumpy" is the ride?
     "current_volatility": round(((hi - lo) / curr) * 100, 2) if curr > 0 else 0,
-    "valuation_health": "Undervalued" if advanced_report["pe_ratio"] < 20 else "Premium"
+    "bid_ask_spread_pct": bid_ask_spread,
+    "valuation_health": "Undervalued" if advanced_report["pe_ratio"] > 0 and advanced_report["pe_ratio"] < 20 else ("Premium" if advanced_report["pe_ratio"] > 20 else "N/A")
 }
     
 
@@ -184,6 +227,8 @@ def analysisPandas (path):
         "signal": signal_report, 
 
         "advanced" : advanced_report,
+        
+        "metrics": analysis_metrics,
     }
     print(snapshot)
 
