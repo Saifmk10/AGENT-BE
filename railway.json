@@ -1,0 +1,5 @@
+{
+  "build": {
+    "dockerfilePath": "Stock_Automation/API_ENDPOINTS_DOCKER/Dockerfile"
+  }
+}
