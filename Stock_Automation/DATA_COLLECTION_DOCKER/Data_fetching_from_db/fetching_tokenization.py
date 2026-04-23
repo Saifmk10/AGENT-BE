@@ -6,7 +6,7 @@
 try:
     from Data_fetching_from_db.connection import db  # production (package import)
 except ImportError:
-    from connection import db  # test / direct script run
+    from .connection import db  # test / direct script run
 import os , csv , re
 from rapidfuzz import process, fuzz
 
