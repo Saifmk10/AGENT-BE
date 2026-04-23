@@ -17,11 +17,9 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-COPY requirements.txt . 
+COPY Stock_Automation/API_ENDPOINTS_DOCKER/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . .
-
-EXPOSE 1555
+COPY Stock_Automation/API_ENDPOINTS_DOCKER/ .
 
 CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT:-1555}"]
