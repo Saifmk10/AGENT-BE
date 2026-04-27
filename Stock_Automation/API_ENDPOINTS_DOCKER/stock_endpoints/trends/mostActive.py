@@ -35,6 +35,8 @@ def mostActive(numberOfStocks):
 
                 # this is the shorter version of the above , this is being used currently above one is as backup
                 current_price_tag = li.select_one("div.xVyTdb.ghTit div.SEGxAb div.BAftM span.P2Luy")
+                if not current_price_tag:
+                    current_price_tag = li.select_one("div.xVyTdb.NN5r3b span.NydbP div.JwB6zf")
                 ticker_tag = li.select_one("div.COaKTb")
 
                 if name_tag and price_tag :
