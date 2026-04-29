@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from stock_endpoints.options.priceFetcher import stockPriceFetcher
 from stock_endpoints.options.searchedStock import SearchedStockPrice
 from stock_endpoints.trends.gainers import gainers
-from stock_endpoints.trends.looser import looser
+from stock_endpoints.trends.looser import losers
 from stock_endpoints.trends.mostActive import mostActive
 from stock_endpoints.news.trendingNews import trendingNews
 
@@ -44,9 +44,9 @@ def get_gainer(limit: int = Query(5, ge=1, le=500)):
     return gainers(limit)
 
 
-@app.get("/looser")
-def get_looser(limit: int = Query(5, ge=1, le=500)):
-    return looser(limit)
+@app.get("/loser")
+def get_loser(limit: int = Query(5, ge=1, le=500)):
+    return losers(limit)
 
 
 @app.get("/mostActive")
