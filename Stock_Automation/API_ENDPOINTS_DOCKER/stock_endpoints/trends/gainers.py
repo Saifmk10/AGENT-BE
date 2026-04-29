@@ -1,46 +1,94 @@
 import requests
-from bs4 import BeautifulSoup
+import json
+from .tickerToName import stockName
 import time
 
-def gainers(numberOfStocks, timeout=10):
-    url = "https://www.google.com/finance/markets/gainers"
-    start_time = time.time()
+NAME_MAP = stockName()
+
+def gainers(numberOfStocks=10):
+    """
+    Fetch top gainers from NSE API with full company names from CSV
     
-    while time.time() - start_time < timeout:
-        try:
-            response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"})
-
-            if response:
-                soup = BeautifulSoup(response.text, "html.parser")
-                stock_list = soup.find("ul", {"class": "sbnBtf"})
-                
-                # Check if stock_list exists BEFORE trying to use it
-                if not stock_list:
-                    time.sleep(1)  # Wait and retry
-                    continue
-                
-                stocks = []
-                for li in stock_list.find_all("li"):
-                    name_tag = li.find("div", {"class": "ZvmM7"})
-                    price_tag = li.find("div", {"class": "xVyTdb ytSBif"})
-
-                    current_price_tag = li.select_one("div.xVyTdb.ghTit div.SEGxAb div.BAftM span.P2Luy")
-                    if not current_price_tag:
-                        current_price_tag = li.select_one("div.xVyTdb.NN5r3b span.NydbP div.JwB6zf")
-
-                    ticker_tag = li.select_one("div.COaKTb")
-
-                    if name_tag and price_tag:
-                        name = name_tag.text.strip()
-                        price = price_tag.text.strip().replace("\u20b9", "")
-                        current_price = current_price_tag.text.strip() if current_price_tag else "N/A"
-                        ticker = ticker_tag.text if ticker_tag else None
-                        stocks.append({"name": name, "ticker": ticker, "price": price, "current": current_price})
-
-                return {"trending_stocks": stocks[:numberOfStocks]}
-
-        except Exception as e:
-            return {"error": str(e)}
+    Args:
+        numberOfStocks: Number of stocks to return (default 10)
     
-    # Timeout reached
-    return {"error": f"Class 'sbnBtf' not found after {timeout} seconds - Google Finance HTML structure may have changed"}
+    Returns:
+        dict with trending_stocks list or error
+    """
+
+    start = time.time()
+
+    try:
+        url = "https://www.nseindia.com/api/equity-stockIndices?index=NIFTY%20100"
+        headers = {
+            "User-Agent": "Mozilla/5.0",
+            "Accept-Language": "en-US,en;q=0.9",
+        }
+        
+        session = requests.Session()
+        session.get("https://www.nseindia.com", headers=headers)
+        response = session.get(url, headers=headers)
+        data = response.json()
+        
+        stocks_raw = data.get("data", [])
+        
+        # Sort by change (highest first = gainers)
+        gainers_list = sorted(
+            stocks_raw,
+            key=lambda x: float(x.get("change", 0)),
+            reverse=True
+        )
+        
+        # Remove index entries
+        gainers_list = [s for s in gainers_list if not s.get('symbol', '').startswith('NIFTY')]
+        
+        stocks = []
+        
+        for stock in gainers_list[:numberOfStocks]:
+            try:
+                symbol = stock['symbol']
+                
+                # Get company name from CSV
+                company_name = NAME_MAP.get(symbol, symbol)
+                
+                change = round(float(stock.get('change', 0)), 2)
+                change_str = f"+₹{change}" if change >= 0 else f"-₹{abs(change)}"
+                change_pct = round(float(stock.get('pChange', 0)), 2)
+                
+                # Build stock object
+                stock_obj = {
+                    "name": company_name,
+                    "ticker": symbol,
+                    "price": round(float(stock.get('lastPrice', 0)), 2),
+                    "current": change_str,
+                    "change_percent": f"+{change_pct}%",
+                    "volume": int(float(stock.get('totalTradedVolume', 0))),
+                    "turnover": float(stock.get('totalTradedValue', 0))
+                }
+                
+                stocks.append(stock_obj)
+                
+            except Exception as e:
+                # Fallback if parsing fails
+                stock_obj = {
+                    "name": stock.get('symbol', 'N/A'),
+                    "ticker": stock.get('symbol', 'N/A'),
+                    "price": round(float(stock.get('lastPrice', 0)), 2),
+                    "current": f"+₹{round(float(stock.get('change', 0)), 2)}",
+                    "change_percent": f"+{round(float(stock.get('pChange', 0)), 2)}%",
+                    "volume": int(float(stock.get('totalTradedVolume', 0))),
+                    "turnover": float(stock.get('totalTradedValue', 0))
+                }
+                stocks.append(stock_obj)
+        
+        end = time.time()
+        print(f"Time taken to fetch gainers: {round(end - start, 3)} seconds")
+
+        return {"trending_stocks": stocks}
+    
+    except Exception as e:
+        return {"error": str(e)}
+
+# if __name__ == "__main__":
+#     result = gainers(50)
+#     print(json.dumps(result, indent=2))

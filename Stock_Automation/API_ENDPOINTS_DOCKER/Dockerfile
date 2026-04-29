@@ -13,17 +13,11 @@
 # # Use PORT env variable if set (Railway will set this), otherwise default to 1555 (local)
 # CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT:-1555}"]
 
-# FROM python:3.11-slim
 
-# WORKDIR /app
 
-# COPY Stock_Automation/API_ENDPOINTS_DOCKER/requirements.txt .
-# RUN pip install --no-cache-dir -r requirements.txt
 
-# COPY Stock_Automation/API_ENDPOINTS_DOCKER/ .
 
-# CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT:-1555}"]
-
+# use for prod
 
 
 FROM python:3.11-slim

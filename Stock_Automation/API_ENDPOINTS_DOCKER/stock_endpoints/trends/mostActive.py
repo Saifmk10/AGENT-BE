@@ -1,60 +1,85 @@
-# this end point is responsible for providing the latest trending stock of the day information , it provides both the stock name and the stock price as of now
-
-import requests
-from bs4 import BeautifulSoup
-from http.server import BaseHTTPRequestHandler, HTTPServer
+from nsetools import Nse
+import yfinance as yf
 import json
+from .tickerToName import stockName
 import time
+import requests
 
+NAME_MAP = stockName()
 
-# function that is responsible for fetching the stock price and the stock name
-def mostActive(numberOfStocks, timeout=10):
-    url = "https://www.google.com/finance/markets/most-active"
+def mostActive(numberOfStocks=10):
+    """
+    Fetch most active stocks by volume from NSE API
+    Uses local CSV for company names (no external API)
+    """
+
     start_time = time.time()
-    
-    while time.time() - start_time < timeout:
-        try:
-            response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"})
 
-            if response:
-                soup = BeautifulSoup(response.text, "html.parser")
+    try:
+        url = "https://www.nseindia.com/api/equity-stockIndices?index=NIFTY%20100"
 
-                # in the google finance website that data of the stock price and the stock name has been added into a ul , so the ul class was fetched to access the inner tags
-                stock_list = soup.find("ul", {"class": "sbnBtf"})
-                
-                # Check if stock_list exists BEFORE trying to use it
-                if not stock_list:
-                    time.sleep(1)  # Wait 1 second before retrying
-                    continue
+        headers = {
+            "User-Agent": "Mozilla/5.0",
+            "Accept-Language": "en-US,en;q=0.9",
+        }
 
-                # with the help of the ul class now we'll be accessing the details from the li tag using the class    
-                stocks = []
-                for li in stock_list.find_all("li"):
-                    name_tag = li.find("div", {"class": "ZvmM7"})
-                    price_tag = li.find("div", {"class": "xVyTdb ytSBif"})
+        session = requests.Session()
+        session.get("https://www.nseindia.com", headers=headers)
 
-                    # fetching the current price like , +90 , -28
-                    current_price_tag = li.select_one("div.xVyTdb.ghTit div.SEGxAb div.BAftM span.P2Luy")
-                    if not current_price_tag:
-                        current_price_tag = li.select_one("div.xVyTdb.NN5r3b span.NydbP div.JwB6zf")
-                    
-                    ticker_tag = li.select_one("div.COaKTb")
+        response = session.get(url, headers=headers)
+        data = response.json()
 
-                    if name_tag and price_tag:
-                        name = name_tag.text.strip()
-                        price = price_tag.text.strip().replace("\u20b9", "")  # stock price filtered and ready to be appended into the list
-                        current_price = current_price_tag.text.strip() if current_price_tag else "N/A"
-                        ticker = ticker_tag.text if ticker_tag else None
-                        stocks.append({"name": name, "ticker": ticker, "price": price, "current": current_price})
+        stocks_raw = data.get("data", [])
 
-                return {"trending_stocks": stocks[:numberOfStocks]}
+        # Sort by volume
+        sorted_stocks = sorted(
+            stocks_raw,
+            key=lambda x: float(x.get("totalTradedVolume", 0)),
+            reverse=True
+        )
 
-        except Exception as e:
-            return {"error": str(e)}
-    
-    # Timeout reached
-    return {"error": f"Class 'sbnBtf' not found after {timeout} seconds - Google Finance HTML structure may have changed"}
+        # Remove index entries
+        actual_stocks = [
+            s for s in sorted_stocks
+            if not s.get('symbol', '').startswith('NIFTY')
+        ]
+
+        stocks = []
+
+        for stock in actual_stocks[:numberOfStocks]:
+            symbol = stock.get('symbol', 'N/A')
+            company_name = NAME_MAP.get(symbol, symbol)
+            
+            # Format change with + or - sign
+            change = round(float(stock.get('change', 0)), 2)
+            change_str = f"+₹{change}" if change >= 0 else f"-₹{abs(change)}"
+
+            stock_obj = {
+                "name": company_name,
+                "ticker": symbol,
+                "price": round(float(stock.get('lastPrice', 0)), 2),
+                "current": change_str,
+                "volume": int(float(stock.get('totalTradedVolume', 0))),
+                "turnover": float(stock.get('totalTradedValue', 0))
+            }
+
+            stocks.append(stock_obj)
+
+        end_time = time.time()
+
+        return {
+            "trending_stocks": stocks
+        }
+
+    except Exception as e:
+        end_time = time.time()
+        return {
+            "error": str(e),
+            "time_taken_seconds": round(end_time - start_time, 3)
+        }
 
 
-# result = mostActive(20)
-# print(result)
+# Run locally
+# if __name__ == "__main__":
+#     result = most_active(20)
+#     print(json.dumps(result, indent=2))
