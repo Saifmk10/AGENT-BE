@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi import Query
 from fastapi.middleware.cors import CORSMiddleware
 from stock_endpoints.options.priceFetcher import stockPriceFetcher
-from stock_endpoints.options.searchedStock import SearchedStockPrice
+from stock_endpoints.options.searchedStock import searchedStock
 from stock_endpoints.trends.gainers import gainers
 from stock_endpoints.trends.looser import losers
 from stock_endpoints.trends.mostActive import mostActive
@@ -36,7 +36,7 @@ def get_stock(symbol : str):
 
 @app.get("/search/{symbol}")
 def get_search(symbol : str):
-    return SearchedStockPrice(symbol)
+    return searchedStock(symbol)
 
 
 @app.get("/gainer")
