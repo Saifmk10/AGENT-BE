@@ -1,254 +1,237 @@
-# Stock Automation – Backend Module
+# Stock Automation
 
-## Overview
-
-The **Stock_Automation** module is a backend-focused Python package designed to automate stock-related workflows such as data collection, analysis, and API exposure. The structure follows a **Dockerized, service-oriented design**, where each major responsibility (data collection, analysis, APIs) is isolated into its own container-ready module.
-
-This folder acts as a **self-contained backend system** that can be plugged into a larger agent or automation platform.
+A backend system that **automatically collects stock prices, analyzes them, and sends reports to users via email**. It also provides a REST API for looking up stock data. Everything runs in Docker containers and is scheduled with cron jobs.
 
 ---
 
-## High-Level Architecture
+## What Does This Do?
+
+In simple terms, this system:
+
+1. **Collects** stock prices throughout the trading day for each subscribed user
+2. **Analyzes** the collected data (averages, highs, lows, trends)
+3. **Emails** a daily report to each user with their stock insights
+4. **Serves** a REST API so you (or a frontend) can look up stocks in real time
+
+---
+
+## System Architecture
+
+```mermaid
+flowchart TD
+    subgraph External["External Sources"]
+        FB[(Firebase)]
+        API["Stock Price APIs"]
+        WEB["Web Scraping"]
+    end
+
+    subgraph Collector["1. DATA_COLLECTION_DOCKER"]
+        C1["Get user subscriptions from Firebase"]
+        C2["Fetch stock prices"]
+        C3["Save as CSV files per user"]
+    end
+
+    subgraph Analyzer["2. ANALYSIS_GMAIL_DOCKER"]
+        A1["Read CSV files"]
+        A2["Run statistical analysis"]
+        A3["Generate daily reports"]
+        A4["Send email to users"]
+        A5["Clean up old files"]
+    end
+
+    subgraph APIService["3. API_ENDPOINTS_DOCKER"]
+        E1["FastAPI Server"]
+        E2["Stock lookup & search"]
+        E3["Market trends"]
+    end
+
+    FB --> C1
+    API --> C2
+    C1 --> C2
+    C2 --> C3
+    C3 -->|CSV files| A1
+    A1 --> A2 --> A3 --> A4
+    A3 --> A5
+
+    WEB --> E1
+    E1 --> E2
+    E1 --> E3
+
+    A4 -->|Email| U["Users"]
+    E2 -->|JSON| FE["Frontend / Clients"]
+    E3 -->|JSON| FE
+```
+
+---
+
+## How the Services Work Together
+
+```mermaid
+sequenceDiagram
+    participant Cron as Cron Scheduler
+    participant DC as Data Collector
+    participant Firebase as Firebase DB
+    participant StockAPI as Stock APIs
+    participant Analyzer as Analyzer + Gmail
+    participant User as User (Email)
+    participant API as REST API
+
+    Note over Cron: Weekdays 9:20 AM
+    Cron->>DC: Start data collection
+    DC->>Firebase: Get subscribed users & stocks
+    Firebase-->>DC: User list + stock names
+    loop Every few minutes until 3:45 PM
+        DC->>StockAPI: Fetch latest prices
+        StockAPI-->>DC: Price data
+        DC->>DC: Save to CSV files
+    end
+
+    Note over Cron: Weekdays 3:46 PM
+    Cron->>Analyzer: Start analysis
+    Analyzer->>Analyzer: Read CSVs, run stats
+    Analyzer->>Analyzer: Generate HTML report
+    Analyzer->>User: Send email with report
+    Analyzer->>Analyzer: Clean up processed files
+
+    Note over API: Runs continuously
+    API->>StockAPI: On-demand price lookups
+    API->>API: Fuzzy search, trends
+```
+
+---
+
+## Project Structure
 
 ```
 Stock_Automation/
-│
-├── DATA_COLLECTION_DOCKER/
-│   ├── Data_fetching_from_db/          # Firebase data retrieval
-│   ├── Stock_price_fetching/           # Price collection via APIs
-│   ├── requirements.txt
-│   ├── Dockerfile
-│   └── run.py                          # Entry point
-│
-├── ANALYSIS_GMAIL_DOCKER/
-│   ├── Stock_analysis_modules/         # Data analysis & statistics
-│   ├── Daily_stock_analysis/           # Daily reports & JSON conversion
-│   ├── Backend_to_user_sender/         # Email & message delivery
-│   ├── Csv_path_cleaner/               # Data cleanup utilities
-│   ├── requirements.txt
-│   ├── Dockerfile
-│   ├── runDailyAnalysis.py
-│   ├── runGmail.py
-│   └── runMessage.py
-│
-├── API_ENDPOINTS_DOCKER/
-│   ├── stock_endpoints/
-│   │   ├── options/                    # Stock search & pricing
-│   │   └── trends/                     # Market trends (gainers, losers, active)
-│   ├── main.py                         # FastAPI application
-│   ├── requirements.txt
+├── DATA_COLLECTION_DOCKER/    ← Collects stock prices
+│   ├── Data_fetching_from_db/ ← Reads user data from Firebase
+│   ├── Stock_price_fetching/  ← Fetches live prices
+│   ├── run.py                 ← Entry point
 │   └── Dockerfile
 │
-├── environment/                        # Environment configuration
-├── __init__.py
-├── requirements.txt
-├── README.md
-└── doc.txt
-```
-
-Each major folder is designed to be **Dockerized independently**, making the system scalable and modular.
-
----
-
-## Folder & File Breakdown
-
-### 📁 DATA_COLLECTION_DOCKER/
-
-**Purpose:**
-Responsible for **collecting raw stock data** from external sources and databases.
-
-**Key Responsibilities:**
-- Fetch live stock prices from financial APIs
-- Retrieve user-subscribed stocks from Firebase
-- Normalize and store raw market data in CSV format
-- Match user-friendly stock names to ticker symbols using fuzzy logic
-
-**Key Components:**
-- `Data_fetching_from_db/` – Queries Firebase for user subscriptions and stock lists
-- `Stock_price_fetching/` – Fetches prices via API and writes to CSV files
-- `run.py` – Orchestrates the data collection pipeline
-
-**Data Flow:**
-1. Connects to Firebase to get subscribed users and their stocks
-2. Calls stock price API endpoints
-3. Writes price data to user-organized CSV files
-4. Feeds data to analysis services
-
----
-
-### 📁 ANALYSIS_GMAIL_DOCKER/
-
-**Purpose:**
-Responsible for **processing, analyzing stock data, and delivering insights** to users via email and other channels.
-
-**Key Responsibilities:**
-- Statistical analysis of stock prices (mean, median, std, OHLC)
-- Daily report generation in JSON and HTML formats
-- AI-powered stock interpretation and summaries
-- Email delivery of analysis reports
-- Data cleanup to prevent storage buildup
-
-**Key Components:**
-- `Stock_analysis_modules/` – Pandas-based statistical analysis
-- `Daily_stock_analysis/` – Daily report generation and JSON conversion
-- `Backend_to_user_sender/` – Email composition and delivery
-- `Csv_path_cleaner/` – Cleanup of processed CSV files
-
-**Data Flow:**
-1. Reads CSV files from `DATA_COLLECTION_DOCKER`
-2. Performs statistical analysis using Pandas
-3. Generates daily reports in JSON format
-4. Formats HTML emails with analysis insights
-5. Sends emails to subscribed users
-6. Cleans up processed files
-
----
-
-### 📁 API_ENDPOINTS_DOCKER/
-
-**Purpose:**
-Serves as the **public API layer** for the stock automation system.
-
-**Key Responsibilities:**
-- Expose REST endpoints for stock queries
-- Provide trending stock data (gainers, losers, most active)
-- Allow real-time stock price lookups
-- Enable fuzzy search for stock names
-
-**Key Endpoints:**
-- `GET /stock/{symbol}` – Fetch price data for a specific stock
-- `GET /search/{symbol}` – Search stocks by name
-- `GET /gainer` – Get top gaining stocks
-- `GET /looser` – Get top losing stocks
-- `GET /mostActive` – Get most active stocks
-
-**Framework:** FastAPI with CORS support
-
-**Data Flow:**
-1. Receives requests from frontend or external services
-2. Scrapes or queries stock data
-3. Uses fuzzy matching for stock name resolution
-4. Returns JSON responses
-
----
-
-## System Architecture & Data Flow
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    External Sources                         │
-│              (Firebase, Stock APIs, Web Scraping)           │
-└────────────────────┬────────────────────────────────────────┘
-                     │
-                     ▼
-        ┌────────────────────────────────┐
-        │   DATA_COLLECTION_DOCKER       │
-        │  • Fetch user subscriptions    │
-        │  • Collect stock prices        │
-        │  • Store in CSV by user/stock  │
-        └────────────┬───────────────────┘
-                     │
-                     ▼
-        ┌────────────────────────────────┐
-        │  ANALYSIS_GMAIL_DOCKER         │
-        │  • Statistical analysis        │
-        │  • Generate daily reports      │
-        │  • Create HTML emails          │
-        │  • Send to users               │
-        │  • Cleanup data                │
-        └────────────┬───────────────────┘
-                     │
-         ┌───────────┴────────────┐
-         ▼                        ▼
-    ┌─────────────┐      ┌─────────────────────┐
-    │  User Email │      │ API_ENDPOINTS_DOCKER│
-    │  (Reports)  │      │ (REST API Layer)    │
-    └─────────────┘      └─────────────────────┘
+├── ANALYSIS_GMAIL_DOCKER/     ← Analyzes data & sends emails
+│   ├── Stock_analysis_modules/← Stats (mean, median, OHLC)
+│   ├── Daily_stock_analysis/  ← Builds daily reports
+│   ├── Csv_path_cleaner/      ← Deletes old CSV files
+│   ├── runDailyAnalysis.py    ← Entry: run analysis
+│   ├── runGmail.py            ← Entry: send emails
+│   └── Dockerfile
+│
+├── API_ENDPOINTS_DOCKER/      ← REST API for stock lookups
+│   ├── stock_endpoints/
+│   │   ├── options/           ← Stock search & pricing
+│   │   └── trends/            ← Gainers, losers, most active
+│   ├── main.py                ← FastAPI app
+│   └── Dockerfile
+│
+└── environment/               ← Python virtual environment
 ```
 
 ---
 
-## Key Features
+## The Three Services Explained
 
-### 1. **Data Collection Pipeline**
-- Automated stock price fetching
-- Multi-user support with per-user CSV organization
-- Fuzzy matching for stock name normalization
-- Concurrent data fetching for performance
+### 1. Data Collector (`DATA_COLLECTION_DOCKER/`)
 
-### 2. **Analysis Engine**
-- Comprehensive statistical analysis (mean, median, std, quartiles)
-- OHLC (Open-High-Low-Close) calculations
-- Price volatility and movement analysis
-- Percentage change calculations
+**What it does:** Grabs stock prices and saves them.
 
-### 3. **Email Delivery**
-- HTML-formatted stock analysis reports
-- Per-user customized summaries
-- Scheduled daily/weekly deliveries
-- Beautiful, responsive email templates
+```mermaid
+flowchart LR
+    A[Firebase] -->|User's stock list| B[Data Collector]
+    C[Stock API] -->|Live prices| B
+    B -->|One CSV per stock| D["/data/csvFiles/{user-email}/"]
+```
 
-### 4. **REST API**
-- FastAPI-based endpoints
-- Real-time stock price lookups
-- Market trend data (gainers, losers, most active)
-- Fuzzy search for user-friendly stock discovery
-- CORS-enabled for frontend integration
+- Connects to Firebase to find out which users subscribed and what stocks they follow
+- Fetches live prices from stock APIs
+- Saves the data as CSV files, organized by user email
+- Uses fuzzy matching so users can type "Reliance" instead of the exact ticker symbol
 
-### 5. **Data Management**
-- Organized CSV file structure per user
-- JSON-based daily report archives
-- Automatic cleanup of processed files
-- Timestamp tracking for data integrity
+### 2. Analyzer + Email (`ANALYSIS_GMAIL_DOCKER/`)
+
+**What it does:** Crunches the numbers and emails users their reports.
+
+```mermaid
+flowchart LR
+    A[CSV Files] --> B[Stats Engine]
+    B -->|mean, median, OHLC| C[Report Generator]
+    C --> D[HTML Email]
+    D --> E[User Inbox]
+    C --> F[Cleanup old files]
+```
+
+- Reads the CSV files saved by the Data Collector
+- Calculates stats: average price, high/low, open/close, volatility
+- Uses **Gemini AI** to generate plain-English summaries
+- Sends a nicely formatted HTML email to each user
+- Cleans up old files so storage doesn't grow forever
+
+### 3. REST API (`API_ENDPOINTS_DOCKER/`)
+
+**What it does:** Lets you look up stock info on demand.
+
+| Method | Endpoint | What it returns |
+|--------|----------|-----------------|
+| GET | `/` | Health check |
+| GET | `/stock/{symbol}` | Price & volume for a stock |
+| GET | `/search/{symbol}` | Search stocks by name |
+| GET | `/gainer` | Today's top gaining stocks |
+| GET | `/looser` | Today's top losing stocks |
+| GET | `/mostActive` | Most traded stocks today |
+
+**Base URL:** `http://localhost:1555`
 
 ---
 
-## Technology Stack
+## Tech Stack
 
-| Component | Technology |
-|-----------|-----------|
+| What | Tool |
+|------|------|
 | Language | Python 3.11+ |
-| Backend Framework | FastAPI |
-| Data Processing | Pandas, NumPy |
+| API Framework | FastAPI |
+| Data Analysis | Pandas, NumPy |
 | Database | Firebase Firestore |
-| Containerization | Docker, Docker Compose |
+| Containers | Docker, Docker Compose |
 | Web Scraping | BeautifulSoup4, Requests |
-| Fuzzy Matching | RapidFuzz |
-| Email | yagmail |
-| Task Scheduling | Cron (external) |
-| AI/LLM | Google Generative AI (Gemini) |
+| Stock Name Matching | RapidFuzz |
+| Email Sending | yagmail |
+| Scheduling | Cron jobs |
+| AI Summaries | Google Gemini |
 
 ---
 
-## Environment Setup
+## Getting Started
 
-### Prerequisites
-- Python 3.11+
+### What You Need
+
+- Python 3.11 or newer
 - Docker & Docker Compose
-- Firebase credentials (JSON key file)
-- API keys for stock and AI services
+- A Firebase project with a service account JSON key
+- API keys (Gemini, etc.)
 
-### Installation
+### Setup Steps
 
-**1. Clone the repository:**
+**1. Clone and enter the project:**
 ```bash
 git clone <repository-url>
 cd Stock_Automation
 ```
 
-**2. Install dependencies:**
+**2. Install Python packages:**
 ```bash
 pip install -r requirements.txt
 ```
 
-**3. Set environment variables:**
+**3. Set your environment variables:**
 ```bash
 export DOCKER_PATH="/path/to/data/directory"
 export GEMINI_API_KEY="your-api-key"
 ```
 
 **4. Add Firebase credentials:**
-Place your Firebase service account JSON file in:
+
+Place your Firebase JSON key file in:
 - `DATA_COLLECTION_DOCKER/Data_fetching_from_db/`
 - `ANALYSIS_GMAIL_DOCKER/Daily_stock_analysis/`
 
@@ -256,216 +239,121 @@ Place your Firebase service account JSON file in:
 
 ## Running the Services
 
-### Option 1: Docker Compose
+### With Docker Compose (recommended)
 
 ```bash
-# Start data collection service
-docker-compose up -d fetcher
-
-# Start analysis service
-docker-compose up -d analyzer
-
-# Start API endpoints
-docker-compose up -d api
+docker-compose up -d fetcher    # Start data collection
+docker-compose up -d analyzer   # Start analysis + email
+docker-compose up -d api        # Start REST API
 ```
 
-### Option 2: Manual Execution
+### Without Docker (manual)
 
-**Data Collection:**
 ```bash
-cd DATA_COLLECTION_DOCKER
-python run.py
-```
+# Collect stock data
+cd DATA_COLLECTION_DOCKER && python run.py
 
-**Daily Analysis:**
-```bash
-cd ANALYSIS_GMAIL_DOCKER
-python runDailyAnalysis.py
-```
+# Run analysis
+cd ANALYSIS_GMAIL_DOCKER && python runDailyAnalysis.py
 
-**Email Delivery:**
-```bash
-cd ANALYSIS_GMAIL_DOCKER
-python runGmail.py
-```
+# Send emails
+cd ANALYSIS_GMAIL_DOCKER && python runGmail.py
 
-**API Server:**
-```bash
-cd API_ENDPOINTS_DOCKER
-uvicorn main:app --host 0.0.0.0 --port 1555
+# Start the API server
+cd API_ENDPOINTS_DOCKER && uvicorn main:app --host 0.0.0.0 --port 1555
 ```
 
 ---
 
-## Scheduled Execution
+## Scheduling (Cron Jobs)
 
-Services are orchestrated using cron jobs:
+The services run automatically on weekdays using cron:
+
+```mermaid
+gantt
+    title Weekday Schedule (Mon–Fri)
+    dateFormat HH:mm
+    axisFormat %H:%M
+
+    section Data Collection
+    Collect prices   :active, 09:20, 15:45
+
+    section Analysis
+    Analyze + Email  :15:46, 16:00
+```
 
 ```bash
-# Data collection: 9:20 AM on weekdays
-20 9 * * 1-5 /path/to/docker/compose/up fetcher
+# Start collecting at 9:20 AM
+20 9 * * 1-5 /path/to/docker-compose up fetcher
 
-# Stop collection: 3:45 PM on weekdays
-45 15 * * 1-5 /path/to/docker/compose/stop fetcher
+# Stop collecting at 3:45 PM
+45 15 * * 1-5 /path/to/docker-compose stop fetcher
 
-# Start analysis: 3:46 PM on weekdays
-46 15 * * 1-5 /path/to/docker/compose/up analyzer
+# Start analysis at 3:46 PM
+46 15 * * 1-5 /path/to/docker-compose up analyzer
 
-# Stop analysis: 4:00 PM on weekdays
-0 16 * * 1-5 /path/to/docker/compose/stop analyzer
+# Stop analysis at 4:00 PM
+0 16 * * 1-5 /path/to/docker-compose stop analyzer
 ```
 
 ---
 
-## Database Schema (Firebase)
+## Firebase Database Structure
 
-```
-Users/
-├── {userId}/
-│   ├── Email: string
-│   ├── Agents/
-│   │   └── Finance/
-│   │       ├── Stock_Added/
-│   │       │   └── {stockId}/
-│   │       │       └── stockName: string
-│   │       └── Stock_Data/
-│   │           └── IntraDay/
-│   │               └── Data/
-│   │                   └── {timestamp}/
-│   │                       ├── last_added: timestamp
-│   │                       └── DATA: object
+```mermaid
+graph TD
+    A[Users Collection] --> B["{userId}"]
+    B --> C["Email: string"]
+    B --> D[Agents]
+    D --> E[Finance]
+    E --> F[Stock_Added]
+    E --> G[Stock_Data]
+    F --> H["{stockId} → stockName"]
+    G --> I[IntraDay]
+    I --> J[Data]
+    J --> K["{timestamp} → DATA object"]
 ```
 
 ---
 
-## File Organization
+## File Storage Layout
 
 ```
 /data/
 ├── csvFiles/
-│   └── {user-email}/
-│       └── {stock-name}.csv
+│   └── user@email.com/
+│       ├── RELIANCE.csv
+│       ├── TCS.csv
+│       └── INFY.csv
 └── reports/
-    └── {user-email}/
-        └── {date}.html (or .json)
+    └── user@email.com/
+        ├── 2025-04-28.html
+        └── 2025-04-28.json
 ```
 
----
-
-## API Endpoints (Development)
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/` | Health check |
-| GET | `/stock/{symbol}` | Fetch stock price & volume |
-| GET | `/search/{symbol}` | Search stock by name |
-| GET | `/gainer` | Top gaining stocks |
-| GET | `/looser` | Top losing stocks |
-| GET | `/mostActive` | Most active stocks |
-
-**Base URL:** `http://localhost:1555` (local) or configured production URL
-
----
-
-## Best Practices
-
-### Data Modeling
-- Store stock data per user to minimize cross-partition queries
-- Use hierarchical directory structure for fast file access
-- Archive old reports to prevent storage bloat
-
-### Performance
-- Use concurrent data fetching with ThreadPoolExecutor
-- Implement retry logic for network failures
-- Cache ticker symbols and company names locally
-
-### Error Handling
-- Log all exceptions with context
-- Implement graceful degradation for API failures
-- Monitor cron job execution with logging
-
-### Security
-- Store sensitive credentials in environment variables
-- Never commit API keys or authentication tokens
-- Use CORS restrictions in production
-- Validate all user inputs before processing
+Each user gets their own folder. Stock data is saved as one CSV per stock, and reports are stored by date.
 
 ---
 
 ## Troubleshooting
 
-### No data in CSVs
-- Verify Firebase credentials are valid
-- Check if users have subscribed to the Finance agent
-- Ensure API rate limits aren't exceeded
-
-### Email not sending
-- Verify SMTP credentials and permissions
-- Check firewall rules for outgoing email
-- Review email logs for authentication errors
-
-### API endpoints failing
-- Verify stock symbol format (e.g., `ASHOKLEY` for NSE stocks)
-- Check if web scraping selectors have changed
-- Review rate limiting from financial websites
-
-### Storage growing too large
-- Verify cleanup job is running (`cleaningData()`)
-- Check if archive process is functioning
-- Monitor disk space usage
+| Problem | What to check |
+|---------|---------------|
+| **No data in CSVs** | Are Firebase credentials valid? Is the user subscribed? Are API rate limits hit? |
+| **Emails not sending** | Check SMTP credentials, firewall rules, and email logs |
+| **API not responding** | Verify stock symbol format (e.g., `ASHOKLEY`). Web scraping selectors may have changed |
+| **Storage filling up** | Make sure the cleanup job (`cleaningData()`) is running |
 
 ---
 
 ## Contributing
 
 1. Create a feature branch from `main`
-2. Follow PEP 8 code style
-3. Add docstrings to new functions
-4. Test locally before submitting
-5. Update this README for significant changes
+2. Follow PEP 8 style
+3. Test locally before submitting
+4. Update this README for big changes
 
 ---
 
-## Architecture Notes
-
-### Design Philosophy
-- **Modularity:** Each service is independent and Dockerized
-- **Scalability:** Services can be deployed and scaled separately
-- **Maintainability:** Clear separation of concerns
-- **Extensibility:** Easy to add new data sources or analysis methods
-
-### Technology Decisions
-- **Firebase:** Provides real-time user management and flexibility
-- **FastAPI:** High-performance, easy to deploy, great for APIs
-- **Pandas:** Industry-standard for data analysis
-- **Docker:** Ensures consistency across environments
-- **Cron:** Simple, reliable scheduling for batch jobs
-
----
-
-## License
-
-[Add your license here]
-
----
-
-## Support
-
-For issues, questions, or contributions, please:
-- Open an issue on the repository
-- Contact the development team
-- Review the documentation in `/docs` folder
-
----
-
-## Changelog
-
-### v1.0.0
-- Initial release with data collection, analysis, and API services
-- Email delivery automation
-- Cron-based scheduling
-
----
-
-**Last Updated:** 8 feb 2025
+**Last Updated:** April 2025
 **Maintained By:** saifmk.online
