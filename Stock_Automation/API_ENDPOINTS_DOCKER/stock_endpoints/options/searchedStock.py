@@ -1,24 +1,109 @@
 import yfinance as yf
 import json
+import csv
+import os
+from rapidfuzz import fuzz, process
+
+
+CSV_PATH = os.path.join(os.path.dirname(__file__), "EQUITY_L.csv")
+
+def load_stock_list():
+    """Load stock symbols and names from EQUITY_L.csv"""
+    stocks = []
+    with open(CSV_PATH, "r", encoding="utf-8") as f:
+        reader = csv.reader(f)
+        next(reader)  # skip header
+        for row in reader:
+            if len(row) >= 2:
+                symbol = row[0].strip()
+                name = row[1].strip()
+                stocks.append({"symbol": symbol, "name": name})
+    return stocks
+
+
+STOCK_LIST = load_stock_list()
+# Separate lookups for symbol and name matching
+SYMBOL_LIST = [s["symbol"] for s in STOCK_LIST]
+NAME_TO_STOCK = {s["name"].upper(): s for s in STOCK_LIST}
+NAME_LIST = list(NAME_TO_STOCK.keys())
+
+
+def fuzzySearchStock(query, limit=5):
+    """
+    Fuzzy search for a stock by name or ticker symbol.
+    Returns a list of top matches with symbol and match score.
+    """
+    query = query.strip()
+    query_upper = query.upper()
+
+    # Exact symbol match
+    for s in STOCK_LIST:
+        if s["symbol"].upper() == query_upper:
+            return [{"symbol": s["symbol"], "name": s["name"], "score": 100}]
+
+    # Fuzzy match against company names using token_set_ratio
+    # (handles partial matches, word reordering, and substring matching well)
+    name_results = process.extract(
+        query_upper,
+        NAME_LIST,
+        scorer=fuzz.token_set_ratio,
+        limit=limit
+    )
+
+    # Also match against symbols for partial ticker matches
+    symbol_results = process.extract(
+        query_upper,
+        SYMBOL_LIST,
+        scorer=fuzz.WRatio,
+        limit=limit
+    )
+
+    # Combine and deduplicate results, preferring higher scores
+    seen = {}
+    for match_name, score, _ in name_results:
+        stock = NAME_TO_STOCK[match_name]
+        symbol = stock["symbol"]
+        if symbol not in seen or score > seen[symbol]["score"]:
+            seen[symbol] = {"symbol": symbol, "name": stock["name"], "score": round(score, 2)}
+
+    for match_symbol, score, _ in symbol_results:
+        stock = next(s for s in STOCK_LIST if s["symbol"] == match_symbol)
+        if match_symbol not in seen or score > seen[match_symbol]["score"]:
+            seen[match_symbol] = {"symbol": match_symbol, "name": stock["name"], "score": round(score, 2)}
+
+    # Sort by score descending and return top results
+    matches = sorted(seen.values(), key=lambda x: x["score"], reverse=True)[:limit]
+
+    return matches
 
 
 def searchedStock(stockTicker):
-    """
-    Fetch stock price and details for a searched stock ticker
-    Uses yfinance to get current price and company info
-    """
+    
+    # Fetch stock price and details for a searched stock ticker.
+    # Uses fuzzy logic to resolve the ticker from EQUITY_L.csv,
+    # then fetches data via yfinance.
+    
 
     try:
-        ticker = yf.Ticker(stockTicker+".NS")
+        # Resolve ticker using fuzzy search
+        matches = fuzzySearchStock(stockTicker)
+        if not matches:
+            return {"error": "No matching stock found"}
+
+        resolved_symbol = matches[0]["symbol"]
+
+        ticker = yf.Ticker(resolved_symbol + ".NS")
         info = ticker.info
 
         stock_data = {
-            "stockName" : info.get("longName", "N/A"),
-            "stockPrice": info.get("currentPrice", "N/A"),
+            "stockName" : info.get("longName", "Name not found"),
+            "stockPrice": info.get("currentPrice", "Price not found"),
+            "resolvedTicker": resolved_symbol,
+            "fuzzyMatches": matches,
 
             "company": {
-                "name": info.get("longName", "N/A"),
-                "ticker": stockTicker.upper(),
+                "name": info.get("longName", "Name not found"),
+                "ticker": resolved_symbol,
                 "sector": info.get("sector", "N/A"),
                 "industry": info.get("industry", "N/A"),
                 "website": info.get("website", "N/A"),
@@ -81,4 +166,8 @@ def searchedStock(stockTicker):
     except Exception as e:
         return {"error": str(e)}
 
-print(json.dumps(searchedStock("TECHM"), indent=2, default=str))
+# Test with exact ticker
+# print(json.dumps(searchedStock("meesho"), indent=2, default=str))
+# Test with fuzzy name search
+# print(json.dumps(searchedStock("tech mahindra"), indent=2, default=str))
+# print(json.dumps(fuzzySearchStock("reliance"), indent=2, default=str))
