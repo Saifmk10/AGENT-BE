@@ -62,6 +62,9 @@ def analysisPandas (path):
 
     dataFrame = pd.read_csv(path)
     dataFrame = dataFrame.sort_values("EXTRACTED_TIME")
+    dataFrame = dataFrame[dataFrame["EXTRACTED_TIME"].between("09:15:00", "15:30:00")] # filter to market hours only
+    dataFrame = dataFrame.drop_duplicates(subset="EXTRACTED_TIME", keep="last") # remove duplicate timestamps
+    dataFrame = dataFrame.reset_index(drop=True) # reset index after filtering
     OHLC_price = dataFrame["EXTRACTED_PRICE"]
 
 
@@ -281,8 +284,9 @@ def fetchCollectedData():
     return analyzedData
 
 
-data = fetchCollectedData()
-print(data)
+if __name__ == "__main__": # prevent running analysis at import time
+    data = fetchCollectedData()
+    print(data)
 
 # def dailyReport():
 #     pass

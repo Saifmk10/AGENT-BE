@@ -221,12 +221,22 @@ def priceFetcher(stockName):
     # url = f"https://the-chat-app-api-git-main-saifmks-projects.vercel.app/api/searchedapi.py?symbol={stockName}"
     url = f"https://stock-api.saifmk.online/stock/{stockName}"
 
+    MARKET_OPEN = datetime.strptime("09:15:00", "%H:%M:%S").time() # NSE market open
+    MARKET_CLOSE = datetime.strptime("15:30:00", "%H:%M:%S").time() # NSE market close
+    last_saved_time = None # tracks last written timestamp to prevent duplicates
+
     while True:
         try:
             # Get current date and time in IST
             now = datetime.now(ZoneInfo("Asia/Kolkata"))
             date = now.strftime("%d-%m-%Y")
             current_time = now.strftime("%H:%M:%S")
+
+            # skip fetch if outside market hours
+            if not (MARKET_OPEN <= now.time() <= MARKET_CLOSE):
+                print(f"Outside market hours ({current_time} IST), skipping {stockName}")
+                time.sleep(60) # check again in 1 min
+                continue
 
             # api calling
             print(f"\nFetching {stockName} at {current_time}")
@@ -252,6 +262,13 @@ def priceFetcher(stockName):
 
             # Log data quality
             log_data_quality(stock_data)
+
+            # skip if this timestamp was already saved (prevents duplicates on retry)
+            if current_time == last_saved_time:
+                print(f"Duplicate timestamp {current_time} for {stockName}, skipping")
+                time.sleep(300)
+                continue
+            last_saved_time = current_time
 
             # ==================== SAVE TO CSV ====================
             # using the key value pair mentioned above to add the data into the respective path
