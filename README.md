@@ -32,50 +32,79 @@ The pipeline runs on a cron schedule aligned to Indian market hours. Nothing nee
 
 The system is organized into three layers, each running as an independent Docker container:
 
-```
-╔══════════════════════════════════════════════════════════════════════════╗
-║  LAYER 1 · INGESTION                                                     ║
-║                                                                          ║
-║   [Google Finance] ──┐                    ┌── [User DB]                  ║
-║   [Yahoo Finance]  ──┼──▶ [FastAPI Layer] ◀┘  subscriptions             ║
-║                       │    stock-api.saifmk.online                       ║
-║                       ▼                                                  ║
-║              [DATA_COLLECTION_DOCKER]                                    ║
-║               fetchingStock.py                                           ║
-║               · Polls every 5 minutes (09:20–15:45 IST)                 ║
-║               · ThreadPoolExecutor — all stocks run concurrently        ║
-║               · Writes: /csvFiles/{user_email}/{TICKER}.csv             ║
-║                                                                          ║
-╠══════════════════════════════════════════════════════════════════════════╣
-║  LAYER 2 · INTELLIGENCE                              (triggered 15:46)  ║
-║                                                                          ║
-║              [ANALYSIS_GMAIL_DOCKER]                                     ║
-║                                                                          ║
-║   CSV → Pandas ──▶ [Statistical Engine] ──▶ [Weekly Aggregator]         ║
-║                     · VWAP Hold/Rejection   · Volatility expansion       ║
-║                     · RVOL & Volume Intensity · Squeeze detection        ║
-║                     · 25+ signals per stock · Flow conviction score     ║
-║                                │                                         ║
-║                                ▼                                         ║
-║                       [LLM Synthesis]                                    ║
-║                        Gemini 2.5-flash  ←  primary                     ║
-║                        Ollama            ←  offline fallback             ║
-║                        "Senior Market Strategist" system prompt         ║
-║                                                                          ║
-╠══════════════════════════════════════════════════════════════════════════╣
-║  LAYER 3 · DELIVERY                                                      ║
-║                                                                          ║
-║   ┌─────────────────┐  ┌──────────────────┐  ┌──────────────────────┐  ║
-║   │  Gmail SMTP     │  │  JSON Archive    │  │  REST API (public)   │  ║
-║   │  HTML report    │  │  Weekly reports  │  │  FastAPI · port 1555 │  ║
-║   │  per subscriber │  │  per-user files  │  │  Cloudflare tunnel   │  ║
-║   └─────────────────┘  └──────────────────┘  └──────────────────────┘  ║
-╚══════════════════════════════════════════════════════════════════════════╝
+### 📊 Layer 1: Data Ingestion
 
-  Cron  09:20 IST  ·  fetcher starts
-        15:45 IST  ·  fetcher stops
-        15:46 IST  ·  analyzer + delivery starts
-        16:00 IST  ·  analyzer stops
+```
+Stock APIs (Google Finance, Yahoo Finance)
+              ↓
+    [DATA_COLLECTION_DOCKER]
+    ├─ Polls: Every 5 min (09:20–15:45 IST)
+    ├─ Concurrency: ThreadPoolExecutor
+    └─ Output: /csvFiles/{user_email}/{TICKER}.csv
+```
+
+| Feature | Details |
+|---------|---------|
+| **Frequency** | 5-minute intervals during market hours |
+| **Parallelism** | All stocks fetched concurrently |
+| **Storage** | One CSV per stock, organized by user email |
+
+---
+
+### 🧠 Layer 2: Statistical Intelligence & LLM Synthesis
+
+```
+CSV Files → Pandas Statistical Engine
+              ↓
+    ┌─ VWAP (Hold / Rejection)
+    ├─ RVOL & Volume Intensity  
+    ├─ 25+ Trading Signals
+    └─ Weekly Aggregation
+              ↓
+    [LLM Synthesis]
+    ├─ Gemini 2.5-flash (primary)
+    ├─ Ollama (offline fallback)
+    └─ "Senior Market Strategist" prompt
+```
+
+**Available Signals:**
+
+| Category | Examples |
+|----------|----------|
+| **Momentum** | Intraday %, Overnight Gap, Range Position |
+| **Conviction** | RVOL, Volume Intensity, VWAP Hold/Rejection |
+| **Behavior** | Dip Absorption, Buyer/Seller Control, Trend Days |
+| **Valuation** | Price to Target, 52W High, P/E Health |
+
+---
+
+### 📧 Layer 3: Report Delivery
+
+```
+         Analysis Complete
+              ↓
+    ┌────────┼────────┐
+    ↓        ↓        ↓
+ Gmail    JSON      REST API
+ Report   Archive   (Public)
+ (SMTP)   (Archive) (Port 1555)
+```
+
+| Channel | Frequency | Audience |
+|---------|-----------|----------|
+| **Gmail** | Daily (post-market) | Subscribers |
+| **JSON** | Weekly | Archive/Integration |
+| **REST API** | Real-time | Public / Frontend |
+
+---
+
+### ⏰ Cron Schedule (IST, Weekdays Only)
+
+```
+09:20 → Data Collector starts   │ Market opens + 5 min
+15:45 → Data Collector stops    │ Market close
+15:46 → Analysis + Email starts │ Immediate post-close
+16:00 → Analysis complete       │ Reports delivered
 ```
 
 ---
