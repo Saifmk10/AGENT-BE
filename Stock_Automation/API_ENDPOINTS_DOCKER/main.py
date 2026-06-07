@@ -29,7 +29,7 @@ def read_root():
 
 
 # api end point where the users can search for a particular stock   [SEARCH OPTION]
-@app.get("/stock/{symbol}")
+@app.get("/stock/{symbol}") # uses tickers only. FOR INERNAL USE ONLY
 def get_stock(symbol : str):
     return stockPriceFetcher(symbol) # current api end point being used through the cloudflare is -----> [NOTE] -----> https://stock-api.saifmk.online/stock
 
