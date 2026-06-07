@@ -1,13 +1,13 @@
 import requests
 
 
-gainer_checker = requests.get("http://0.0.0.0:1555/gainer?limit=5")
+gainer_checker = requests.get("http://stock-api.saifmk.online/gainer?limit=5")
 
-loser_checker = requests.get("http://0.0.0.0:1555/loser?limit=5")
+loser_checker = requests.get("http://stock-api.saifmk.online/loser?limit=5")
 
-most_active_checker = requests.get("http://0.0.0.0:1555/mostActive?limit=5")
+most_active_checker = requests.get("http://stock-api.saifmk.online/mostActive?limit=5")
 
-search_checker = requests.get("http://0.0.0.0:1555/search/REDIGNTON")
+search_checker = requests.get("http://stock-api.saifmk.online/search/REDIGNTON")
 
 
 def messager (message_to_send):
