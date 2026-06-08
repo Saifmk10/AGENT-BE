@@ -17,7 +17,7 @@ def losers(numberOfStocks=10):
         # Sort by change percentage (lowest first = losers)
         losers_list = sorted(
             losers_list,
-            key=lambda x: float(x.get("pChange", 0)),
+            key=lambda x: float(x.get("perChange", 0)),
             reverse=False
         )
         
@@ -31,18 +31,18 @@ def losers(numberOfStocks=10):
                 company_name = NAME_MAP.get(symbol, symbol)
                 
                 # Parse values - handle both string and numeric formats
-                change = float(stock.get('change', stock.get('Change', 0)))
+                change = float(stock.get('net_price', stock.get('change', 0)))
                 change = round(change, 2)
                 change_str = f"-₹{abs(change)}" if change < 0 else f"+₹{change}"
                 
-                change_pct = float(stock.get('pChange', stock.get('Percent_Change', 0)))
+                change_pct = float(stock.get('perChange', stock.get('pChange', 0)))
                 change_pct = round(change_pct, 2)
                 
                 price = float(stock.get('ltp', stock.get('lastPrice', stock.get('Price', 0))))
                 price = round(price, 2)
                 
-                volume = int(float(stock.get('volume', stock.get('Volume', 0))))
-                turnover = float(stock.get('value', stock.get('totalTradedValue', 0)))
+                volume = int(float(stock.get('trade_quantity', stock.get('volume', 0))))
+                turnover = float(stock.get('turnover', stock.get('value', 0)))
                 
                 # Build stock object
                 stock_obj = {
@@ -64,10 +64,10 @@ def losers(numberOfStocks=10):
                     "name": symbol,
                     "ticker": symbol,
                     "price": float(stock.get('ltp', stock.get('lastPrice', stock.get('Price', 0)))),
-                    "current": f"-₹{abs(round(float(stock.get('change', stock.get('Change', 0))), 2))}",
-                    "change_percent": f"{round(float(stock.get('pChange', stock.get('Percent_Change', 0))), 2)}%",
-                    "volume": int(float(stock.get('volume', stock.get('Volume', 0)))),
-                    "turnover": float(stock.get('value', stock.get('totalTradedValue', 0)))
+                    "current": f"-₹{abs(round(float(stock.get('net_price', stock.get('change', 0))), 2))}",
+                    "change_percent": f"{round(float(stock.get('perChange', stock.get('pChange', 0))), 2)}%",
+                    "volume": int(float(stock.get('trade_quantity', stock.get('volume', 0)))),
+                    "turnover": float(stock.get('turnover', stock.get('value', 0)))
                 }
                 stocks.append(stock_obj)
         
