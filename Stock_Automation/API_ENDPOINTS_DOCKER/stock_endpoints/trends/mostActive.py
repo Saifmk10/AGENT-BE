@@ -22,7 +22,7 @@ def mostActive(numberOfStocks=10):
         all_stocks = gainers + losers
         sorted_stocks = sorted(
             all_stocks,
-            key=lambda x: float(x.get("volume", x.get("totalTradedVolume", 0))),
+            key=lambda x: float(x.get("trade_quantity", x.get("volume", 0))),
             reverse=True
         )
 
@@ -34,21 +34,25 @@ def mostActive(numberOfStocks=10):
                 company_name = NAME_MAP.get(symbol, symbol)
                 
                 # Parse values - handle both string and numeric formats
-                change = float(stock.get('change', stock.get('Change', 0)))
+                change = float(stock.get('net_price', stock.get('change', 0)))
                 change = round(change, 2)
                 change_str = f"+₹{change}" if change >= 0 else f"-₹{abs(change)}"
+                
+                change_pct = float(stock.get('perChange', stock.get('pChange', 0)))
+                change_pct = round(change_pct, 2)
                 
                 price = float(stock.get('ltp', stock.get('lastPrice', stock.get('Price', 0))))
                 price = round(price, 2)
                 
-                volume = int(float(stock.get('volume', stock.get('Volume', 0))))
-                turnover = float(stock.get('value', stock.get('totalTradedValue', 0)))
+                volume = int(float(stock.get('trade_quantity', stock.get('volume', 0))))
+                turnover = float(stock.get('turnover', stock.get('value', 0)))
                 
                 stock_obj = {
                     "name": company_name,
                     "ticker": symbol,
                     "price": price,
                     "current": change_str,
+                    "change_percent": f"+{change_pct}%" if change_pct >= 0 else f"{change_pct}%",
                     "volume": volume,
                     "turnover": turnover
                 }
