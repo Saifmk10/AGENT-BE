@@ -233,10 +233,10 @@ def priceFetcher(stockName):
             current_time = now.strftime("%H:%M:%S")
 
             # skip fetch if outside market hours
-            if not (MARKET_OPEN <= now.time() <= MARKET_CLOSE):
-                print(f"Outside market hours ({current_time} IST), skipping {stockName}")
-                time.sleep(60) # check again in 1 min
-                continue
+            # if not (MARKET_OPEN <= now.time() <= MARKET_CLOSE):
+            #     print(f"Outside market hours ({current_time} IST), skipping {stockName}")
+            #     time.sleep(60) # check again in 1 min
+            #     continue
 
             # api calling
             print(f"\nFetching {stockName} at {current_time}")
