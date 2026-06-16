@@ -2,19 +2,81 @@
 # uses yfinance for reliable NSE data instead of web scraping
 # this api does not handle how the input has been added and will throw error if ticker is not managed properly
 
+import csv
+import difflib
+import os
 import yfinance as yf
+
+
+CSV_PATH = os.path.join(os.path.dirname(__file__), "EQUITY_L.csv")
+
+
+def _load_symbols():
+    symbols = set()
+    try:
+        with open(CSV_PATH, "r", encoding="utf-8") as csv_file:
+            reader = csv.reader(csv_file)
+            next(reader, None)
+            for row in reader:
+                if row:
+                    symbol = row[0].strip().upper()
+                    if symbol:
+                        symbols.add(symbol)
+    except Exception:
+        pass
+    return symbols
+
+
+SYMBOLS = _load_symbols()
+
+
+def _normalize_symbol(raw_symbol):
+    normalized = (raw_symbol or "").strip().upper()
+    if normalized.endswith(".NS"):
+        normalized = normalized[:-3]
+    return normalized
+
+
+def _resolve_symbol(raw_symbol):
+    normalized = _normalize_symbol(raw_symbol)
+    if not normalized:
+        return normalized
+
+    if normalized in SYMBOLS:
+        return normalized
+
+    # Handle small input mistakes like REDIGNTON -> REDINGTON.
+    close_matches = difflib.get_close_matches(normalized, list(SYMBOLS), n=1, cutoff=0.85)
+    return close_matches[0] if close_matches else normalized
+
+
+def _fetch_ticker_info(symbol):
+    ticker = yf.Ticker(f"{symbol}.NS")
+    info = ticker.info or {}
+
+    current_price = info.get("currentPrice") or info.get("regularMarketPrice")
+
+    # Fallback for cases where yfinance info is missing/partial.
+    if current_price is None:
+        history = ticker.history(period="1d", interval="1m")
+        if not history.empty and "Close" in history:
+            close_series = history["Close"].dropna()
+            if not close_series.empty:
+                current_price = float(close_series.iloc[-1])
+
+    return ticker, info, current_price
 
 
 def stockPriceFetcher(stockName):
     try:
-        ticker = yf.Ticker(f"{stockName}.NS")
-        info = ticker.info
+        resolved_symbol = _resolve_symbol(stockName)
+        ticker, info, currentPrice = _fetch_ticker_info(resolved_symbol)
 
         # verify we got valid data back
-        currentPrice = info.get("currentPrice") or info.get("regularMarketPrice")
         if currentPrice is None:
             return {
                 "stockName": stockName,
+                "resolvedTicker": resolved_symbol,
                 "stockPrice": "Error: no price data returned from yfinance"
             }
 
@@ -48,6 +110,7 @@ def stockPriceFetcher(stockName):
 
         return {
             "stockName": stockName,
+            "resolvedTicker": resolved_symbol,
             "stockPrice": currentPrice,
             "stockVolume": float(currentVolume) if currentVolume is not None else None,
             "stockAvgVolume": float(avgVolume) if avgVolume is not None else None,
